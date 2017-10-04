@@ -7,3 +7,5 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+//testing hangman client github connectivity
