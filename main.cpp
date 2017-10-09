@@ -25,10 +25,10 @@ void PlayHangman(const vector <string> & words, string user)
     cout << words[0] << endl;// testing chosen words
     cout << words[1] << endl;
 
-    const int word1_len = words[0].length();
+    const int word1_len = words[0].length();// Length of words
     const int word2_len = words[1].length();
 
-    bool obj[word1_len] = {false};
+    bool obj[word1_len] = {false};// boolean array testing whether a letter was guessed
     bool type[word2_len] = {false};
 
     string letters = "";
@@ -44,13 +44,13 @@ void PlayHangman(const vector <string> & words, string user)
         for (int i=0;i<2;i++){
             for (int j=0;j<(int)words[i].length();j++){
                 if (!i){
-                    if (!obj[j]){
+                    if (!obj[j]){// iterating and deciding whether to show a letter or underscore
                         cout << "_ ";
                     } else {
                         cout << words[i][j] << " ";
                     }
                 } else {
-                    if (!type[j]){
+                    if (!type[j]){// same thing for second word
                         cout << "_ ";
                     } else {
                         cout << words[i][j] << " ";
@@ -62,7 +62,7 @@ void PlayHangman(const vector <string> & words, string user)
         cout << "\n" << endl;
         cout << "Enter your guess - ";
         //scanf(" %c", &c);
-        if((int)accumulate(obj, obj + word1_len, 0)==word1_len && (int)accumulate(type, type + word2_len, 0)==word2_len){
+        if((int)accumulate(obj, obj + word1_len, 0)==word1_len && (int)accumulate(type, type + word2_len, 0)==word2_len){// check if boolean array is all true
             endgame = true;
         } else if (num_guesses <= 0){
             endgame = true;
@@ -75,7 +75,7 @@ void PlayHangman(const vector <string> & words, string user)
         for (int i=0;i<2;i++){
             for (int j=0;j<(int)words[i].length();j++){
                 if (c == words[i][j]){
-                    if (!i){
+                    if (!i){// setting boolean array depending if letter was guessed
                         obj[j] = true;
                     } else {
                         type[j] = true;
@@ -109,7 +109,7 @@ vector <vector <string> > GetWords(string filename) // pulls words from txt file
         {
             string word;
             if (!getline( ss, word, ',' )) break;
-            record.push_back( word );
+            record.push_back( word );// finds comma then inserts word to the list
         }
 
         word_list.push_back( record );
@@ -160,7 +160,7 @@ int main()
     while (key!=ENTER){
         key = getch();
         cout << "*";
-        pass += key;
+        pass += key;// append letter to password string
     }
     cout << endl;
     cout << "password is: " << pass << endl; // testing hidden password
@@ -180,7 +180,7 @@ int main()
         switch (n)
         {
         case ONE:// key value from getch()
-            cout << "option was 1" << endl;
+            cout << "option was 1" << endl;// testing to see if this option was chosen
             PlayHangman(data[4], usrn); // using some chosen words and whatever username typed
             break;
         case TWO:
@@ -188,6 +188,7 @@ int main()
             break;
         case THREE:
             cout << "option was 3" << endl;
+            exit(EXIT_SUCCESS);
             break;
         default:
             cout << "Invalid option" << endl;
