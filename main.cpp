@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <numeric>
+#include <algorithm>
 
 // numerical key values from keyboard
 #define ENTER 13
@@ -16,8 +17,49 @@
 
 using namespace std;
 
+struct account // structure for accounts vector
+{
+    string usrn;
+    string pass;
+    int won;
+    int played;
+};
+
 void ClearScreen(){ // cleans the screen
     if (system("CLS")) system("clear");
+}
+
+bool CompareUser(const account &a, const account &b){ // compare function used to sort vector of accounts
+    if (a.played == 0){ // prevents divide by zero
+        return 0;
+    } else if (b.played == 0){
+        return 1;
+    }
+    if (a.won == b.won){
+        if (((double)a.won)/a.played == ((double)b.won)/b.played){ // determines percentage of games won
+            return a.usrn < b.usrn;
+        } else {
+            return ((double)a.won)/a.played < ((double)b.won)/b.played;
+        }
+    } else {
+        return a.won < b.won;
+    }
+}
+
+void Leaderboard(vector <account> accounts) // shows the leaderboard
+{
+    vector <account> accs = accounts;
+    sort(accs.begin(), accs.end(), CompareUser);
+    for (int i=0;i<accs.capacity();i++){
+        if (accs[i].played > 0){
+            cout << "\n=============================================\n" << endl;
+            cout << "Player - " << accs[i].usrn << endl;
+            cout << "Number of games won - " << accs[i].won << endl;
+            cout << "Number of games played - " << accs[i].played << endl;
+            cout << "\n=============================================\n" << endl;
+        }
+    }
+    system("pause");
 }
 
 void PlayHangman(const vector <string> & words, string user)
@@ -28,7 +70,7 @@ void PlayHangman(const vector <string> & words, string user)
     const int word1_len = words[0].length();// Length of words
     const int word2_len = words[1].length();
 
-    bool obj[word1_len] = {false};// boolean array testing whether a letter was guessed
+    bool obj[word1_len] = {false};// boolean array indicating whether a letter was guessed
     bool type[word2_len] = {false};
 
     string letters = "";
@@ -122,22 +164,52 @@ vector <vector <string> > GetWords(string filename) // pulls words from txt file
     return word_list;
 }
 
-vector <vector <string> > GetAccs(string filename) // pulls usernames and passwords from txt file
+//vector <vector <string> > GetAccs(string filename) // pulls usernames and passwords from txt file
+//{
+//    ifstream auth_file(filename);
+//    vector <vector <string> > accs;
+//
+//    int counter = 0;
+//    while (!auth_file.eof())
+//    {
+//        vector<string> acc;
+//        string field;
+//        for (int i=0;i<2;i++){
+//            auth_file >> field;
+//            acc.push_back(field);
+//        }
+//        accs.push_back(acc);
+//        cout << accs[counter][0] << accs[counter][1] << endl; // testing accounts
+//        counter++;
+//    }
+//    return accs;
+//}
+
+//! ^^^ OLD FUNCTION ^^^
+
+// creating a vector of structs but not a linked list because this is easier
+// the struct is declared near the top
+
+vector <account> GetAccs(string filename) // pulls usernames and passwords from txt file
 {
     ifstream auth_file(filename);
-    vector <vector <string> > accs;
+    auth_file.ignore(numeric_limits<streamsize>::max(),'\n'); // skips the first line
+    //vector <vector <string> > accs;
+    vector <account> accs;
 
     int counter = 0;
     while (!auth_file.eof())
     {
-        vector<string> acc;
-        string field;
-        for (int i=0;i<2;i++){
-            auth_file >> field;
-            acc.push_back(field);
-        }
-        accs.push_back(acc);
-        cout << accs[counter][0] << accs[counter][1] << endl; // testing accounts
+        //vector<string> acc;
+        string usrn, pass;
+        //for (int i=0;i<2;i++){
+            auth_file >> usrn;
+            auth_file >> pass;
+            accs.push_back({usrn, pass, 0, 0});
+        //}
+        //accs.push_back(acc);
+        cout << accs[counter].usrn << accs[counter].pass << endl; // testing account creds
+        cout << accs[counter].won << accs[counter].played << endl; // testing account stats
         counter++;
     }
     return accs;
@@ -145,8 +217,9 @@ vector <vector <string> > GetAccs(string filename) // pulls usernames and passwo
 
 int main()
 {
-    vector <vector <string> > data = GetWords("hangman_text.txt"); // unused for now
-    vector <vector <string> > data2 = GetAccs("Authentication.txt");
+    vector <vector <string> > words = GetWords("hangman_text.txt"); // unused for now
+    //vector <vector <string> > accs = GetAccs("Authentication.txt");
+    vector <account> accs = GetAccs("Authentication.txt");
 
     int key;
     string usrn, pass;
@@ -181,10 +254,19 @@ int main()
         {
         case ONE:// key value from getch()
             cout << "option was 1" << endl;// testing to see if this option was chosen
-            PlayHangman(data[4], usrn); // using some chosen words and whatever username typed
+            PlayHangman(words[4], usrn); // using some chosen words and whatever username typed
             break;
         case TWO:
             cout << "option was 2" << endl;
+            accs[4].played = 10;
+            accs[4].won = 8;
+            accs[5].played = 10;
+            accs[5].won = 8;
+            accs[8].played = 100;
+            accs[8].won = 8;
+            accs[2].played = 20;
+            accs[2].won = 17;
+            Leaderboard(accs);
             break;
         case THREE:
             cout << "option was 3" << endl;
