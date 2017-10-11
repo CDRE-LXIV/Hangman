@@ -12,6 +12,7 @@
 #define MAXDATASIZE 100
 #define ARRAY_SIZE 10
 #define RETURNED_ERROR -1
+#define h_addr h_addr_list[0] /* for backward compatibility */
 
 //send a string to hangman_server, upto 10 characters length
 void SendString(int socket_id, char *string, int stringLength) {
@@ -116,42 +117,42 @@ int main(int argc, char *argv[]) {
 	DisplayWelcomeMessage();
 
 	while(1){
-	//client should be connected, receive message
-	ReceiveData(sockfd);
+        //client should be connected, receive message
+        ReceiveData(sockfd);
 
-	//take username to be sent to server
-	char username[10] ="";
-	scanf("%9s", username);
-	int usernameLength = strlen(username);
-	//send username
-	SendString(sockfd, username, usernameLength);
-	ReceiveData(sockfd);
+        //take username to be sent to server
+        char username[10] ="";
+        scanf("%9s", username);
+        int usernameLength = strlen(username);
+        //send username
+        SendString(sockfd, username, usernameLength);
+        ReceiveData(sockfd);
 
-	//take password to be sent to server
-	char password[10] ="";
-	scanf("%9s", password);
-	int passwordLength = strlen(password);
-	//send password
-	SendString(sockfd, password, passwordLength);
+        //take password to be sent to server
+        char password[10] ="";
+        scanf("%9s", password);
+        int passwordLength = strlen(password);
+        //send password
+        SendString(sockfd, password, passwordLength);
 
 
-	//should now be logged in, draw game area
-	ClearScreen();
-	//receive welcome message
-	ReceiveData(sockfd);
-	// ClearScreen();
-	//draw the menu
-	DisplayMainMenu();
-	//wait for key input 1-3
-	char key = ' ';
-	while ((key != '1')&&(key != '2')&&(key != '3')){
-		key = getchar();
-	}
-	SendChar(sockfd, key);
-	ClearScreen();
-	printf("You picked: %c\n", key);
+        //should now be logged in, draw game area
+        ClearScreen();
+        //receive welcome message
+        ReceiveData(sockfd);
+        // ClearScreen();
+        //draw the menu
+        DisplayMainMenu();
+        //wait for key input 1-3
+        char key = ' ';
+        while ((key != '1')&&(key != '2')&&(key != '3')){
+            key = getchar();
+        }
+        SendChar(sockfd, key);
+        ClearScreen();
+        printf("You picked: %c\n", key);
 	}	//end while loop
-close(sockfd);
+    close(sockfd);
 
-return 0;
+    return 0;
 }	//end main
