@@ -27,25 +27,28 @@ char ReceiveCharacter(int socket_identifier);
 int TestCharacter(char receivedChar);
 
 //define a structure-linked list to hold word pairs
-typedef struct list wordPair;
+//typedef struct list wordPair;
 
-struct list {
+typedef struct list {
     char firstWord [wordMaxLength];
     char secondWord [wordMaxLength];
     unsigned int wordPairNumber;
-    wordPair *next;
-};
+    struct list* next;
+} wordPair;
 
 //define a structure-linked list to hold users
-typedef struct node userNode;
+//typedef struct node userNode;
 
-struct node {
+typedef struct node {
   char username [usernameMaxLength];
   char password [passwordMaxLength];
   int gamesWon;
   int gamesPlayed;
-  userNode *next;
-};
+  struct node* next;
+} userNode;
+
+typedef void (callback*)(userNode* data);
+typedef void (callback*)(wordPair* data);
 
 //print the authentication details for a single user
 // void PrintUser(userNode *user) {
@@ -53,61 +56,111 @@ struct node {
 // }
 
 //add a userNode node
-userNode * AddUserNode(userNode *head, char username[], char password[]) {
+userNode * AddUserNode(userNode *next, char username[], char password[]) {
     // if the user is not "Username" and password is not "password"
+    /*
     char defaultUsername[] = "Username";
     char defaultPassword[] = "Password";
-    if ((strcmp(username, defaultUsername) !=0)&&(strcmp(password, defaultPassword) !=0)) {
+    if ((strcmp(username, defaultUsername) !=0)&&(strcmp(password, defaultPassword) !=0)) {*/
     // create new userNode to add to list
     userNode *newNode = (userNode *)malloc(sizeof(userNode));
     if (newNode == NULL) {
-        return NULL;
+        return(0);
     }
     // insert new node
     strcpy(newNode->username, username);
     strcpy(newNode->password, password);
     newNode->gamesWon = 0;
     newNode->gamesPlayed = 0;
-    newNode->next = head;
+    newNode->next = next;
     // printf("Added: Username: %s \t Password: %s\n", newNode->username, newNode->password);
     return newNode;
   }
+}//
+
+userNode* prependUser(userNode* head, char usrn[], char pass[]){
+    userNode* new_node = addUserNode(head, usrn, pass);
+    head = new_node;
+    return head;
+}
+
+userNode* appendUser(userNode* head, char usrn[], char pass[])
+{
+    if(head == NULL)
+        return NULL;
+    /* go to the last node */
+    userNode *cursor = head;
+    while(cursor->next != NULL)
+        cursor = cursor->next;
+
+    /* create a new node */
+    userNode* new_node =  addUserNode(NULL, usrn, pass);
+    cursor->next = new_node;
+
+    return head;
 }
 
 //print the authentication details for every user
+/*
 void PrintAllUserDetails(userNode *head) {
     for ( ; head != NULL; head = head->next) {
         printf("Username=%s \t\t Password=%s\n", head->username, head->password);
     }
 }
+*/
 //****************************
 
 //add a wordPair node
-wordPair * AddWordPair(wordPair *head, char firstWord[], char secondWord[], unsigned int wordPairCounter) {
+wordPair * AddWordPair(wordPair *next, char firstWord[], char secondWord[], unsigned int wordPairCounter) {
     // create new wordPair to add to list
     wordPair *newPair = (wordPair *)malloc(sizeof(wordPair));
     if (newPair == NULL) {
-        return NULL;
+        return(0);
     }
     // insert new node
     strcpy(newPair->firstWord, firstWord);
     strcpy(newPair->secondWord, secondWord);
     newPair->wordPairNumber = wordPairCounter;
-    newPair->next = head;
+    newPair->next = next;
     // printf("Added: Word pair: %d \t First word: %s \t Second word: %s \n", newPair->wordPairNumber, newPair->firstWord, newPair->secondWord);
     return newPair;
 }
 
+wordPair* prependWord(userNode* head, char word1[], char word2[]){
+    wordPair* new_node = addWordPair(head, word1, word2, 0);
+    head = new_node;
+    return head;
+}
+
+wordPair* appendWord(userNode* head, char word1[], char word2[], unsigned int counter)
+{
+    if(head == NULL)
+        return NULL;
+    /* go to the last node */
+    wordPair *cursor = head;
+    while(cursor->next != NULL)
+        cursor = cursor->next;
+
+    /* create a new node */
+    wordPair* new_node =  addWordPair(NULL, word1, word2, counter);
+    cursor->next = new_node;
+
+    return head;
+}
+
 //print every wordPair
+/*
 void PrintAllWordPairs(wordPair *head) {
     for ( ; head != NULL; head = head->next) {
       printf("First Word=%s \t Second Word=%s \t Word Pair Number:%d\n ", head->firstWord, head->secondWord, head->wordPairNumber);
     }
 }
+*/
 //**************************
 
 //write function to take contents of Authentication.txt to linked list
-int AuthenticationImport() {
+userNode* AuthenticationImport() {
+    userNode *head = NULL;
     FILE *authenticationText;
     //authenticationArray holds fget string before parsing
     char authenticationArray[passwordMaxLength+usernameMaxLength];
@@ -132,6 +185,8 @@ int AuthenticationImport() {
     }
 
     //copy values in Authentication.txt to usernameArray and passwordArray, remove spaces somehow
+    fgets(authenticationArray, (usernameMaxLength+passwordMaxLength), authenticationText);
+    head = prependUser(head, usernameArray, passwordArray);
 
     while(fgets(authenticationArray, (usernameMaxLength+passwordMaxLength), authenticationText)) {
         //populate usernameArray using first 10 values (or until a space or indent) of authenticationArray
@@ -159,18 +214,20 @@ int AuthenticationImport() {
         }
 
         //print extracted values for test purposes
-        printf("Username: %s \t\t Password: %s \n", usernameArray, passwordArray);
+        //printf("Username: %s \t\t Password: %s \n", usernameArray, passwordArray);
 
         //add this user to a a new node
-        userNode *head = NULL;
-        AddUserNode(head, usernameArray, passwordArray);
+        //userNode *head = NULL;
+        //AddUserNode(head, usernameArray, passwordArray);
+        head = appendUser(head, usernameArray, passwordArray);
         //newPair = AddWordPair(newPair, firstWordArray, secondWordArray, wordPairCounter);
     }
     fclose(authenticationText);
-    return 0;
+    return head;
 }
 
-int WordListImport() {
+wordPair* WordListImport() {
+    wordPair* head = NULL;
     FILE *hangmanText;
     //awordArray holds fget string before parsing
     char wordArray[2*wordMaxLength];
@@ -196,6 +253,9 @@ int WordListImport() {
 
     //copy values in Authentication.txt to usernameArray and passwordArray, remove spaces somehow
     unsigned int wordPairCounter = 0;
+    fgets(wordArray, sizeof(wordArray), hangmanText);
+    head = prependWord(head, firstWordArray, secondWordArray);
+
     while(fgets(wordArray, sizeof(wordArray), hangmanText)) {
 
         //populate firstWordArray using char values (until a comma) of hangmanText
@@ -224,16 +284,46 @@ int WordListImport() {
         }
         wordPairCounter++;
         //print extracted values for test purposes
-        printf("Word pair: %d \t First word: %s \t Second word: %s \n", wordPairCounter, firstWordArray, secondWordArray);
+        //printf("Word pair: %d \t First word: %s \t Second word: %s \n", wordPairCounter, firstWordArray, secondWordArray);
 
         // //add this user to a a new node
-        wordPair *newPair = NULL;
-        newPair = AddWordPair(newPair, firstWordArray, secondWordArray, wordPairCounter);
+        //wordPair *newPair = NULL;
+        //newPair = AddWordPair(newPair, firstWordArray, secondWordArray, wordPairCounter);
+        head = apendWord(head, firstWordArray, secondWordArray, wordPairCounter);
     }
     fclose(hangmanText);
-    return 0;
+    return head;
 }
 
+void traverseUsers(userNode* head, callback f){
+    node* cursor = head;
+    while(cursor != NULL){
+        f(cursor);
+        cursor = cursor->next;
+    }
+}
+
+void traverseWords(wordPair* head, callback f){
+    node* cursor = head;
+    while(cursor != NULL){
+        f(cursor);
+        cursor = cursor->next;
+    }
+}
+
+void displayUsers(userNode* n){
+    if (n != NULL){
+        printf("%s ", n->username);
+        printf("%s\n", n->password);
+    }
+}
+
+void displayWords(wordPair* n){
+    if (n != NULL){
+        printf("%s ", n->firstWord);
+        printf("%s\n", n->secondWord);
+    }
+}
 
 char *ReceiveData(int socket_identifier, int size) {
 
@@ -313,6 +403,11 @@ int TestCharacter(char receivedChar) {
 }
 
 int main (int argc, char *argv[]) {
+    userNode* users = NULL;
+    wordPair* words = NULL;
+    callback dispUsers = displayUsers;
+    callback dispWords = displayWords;
+
     int portNumber;
 	int sockfd, new_fd;  /* listen on sock_fd, new connection on new_fd */
 	struct sockaddr_in my_addr;    /* my address information */
@@ -354,10 +449,12 @@ int main (int argc, char *argv[]) {
 	printf("server starts listnening on port %d...\n", portNumber);
 
     //import word list and authentication details
-    WordListImport();
+    words = WordListImport();
+    traverseWords(words, dispWords);
     printf("Words imported!\n");
 
-    AuthenticationImport();
+    users = AuthenticationImport();
+    traverseUsers(users, dispUsers);
     printf("Authentication details imported!\n");
 
 	/* repeat: accept, send, close the connection */
