@@ -47,8 +47,8 @@ typedef struct node {
   struct node* next;
 } userNode;
 
-typedef void (callback*)(userNode* data);
-typedef void (callback*)(wordPair* data);
+typedef void (*callbackUser)(userNode* data);
+typedef void (*callbackWord)(wordPair* data);
 
 //print the authentication details for a single user
 // void PrintUser(userNode *user) {
@@ -75,11 +75,11 @@ userNode * AddUserNode(userNode *next, char username[], char password[]) {
     newNode->next = next;
     // printf("Added: Username: %s \t Password: %s\n", newNode->username, newNode->password);
     return newNode;
-  }
-}//
+  //}
+}
 
 userNode* prependUser(userNode* head, char usrn[], char pass[]){
-    userNode* new_node = addUserNode(head, usrn, pass);
+    userNode* new_node = AddUserNode(head, usrn, pass);
     head = new_node;
     return head;
 }
@@ -94,7 +94,7 @@ userNode* appendUser(userNode* head, char usrn[], char pass[])
         cursor = cursor->next;
 
     /* create a new node */
-    userNode* new_node =  addUserNode(NULL, usrn, pass);
+    userNode* new_node =  AddUserNode(NULL, usrn, pass);
     cursor->next = new_node;
 
     return head;
@@ -127,7 +127,7 @@ wordPair * AddWordPair(wordPair *next, char firstWord[], char secondWord[], unsi
 }
 
 wordPair* prependWord(userNode* head, char word1[], char word2[]){
-    wordPair* new_node = addWordPair(head, word1, word2, 0);
+    wordPair* new_node = AddWordPair(head, word1, word2, 0);
     head = new_node;
     return head;
 }
@@ -142,7 +142,7 @@ wordPair* appendWord(userNode* head, char word1[], char word2[], unsigned int co
         cursor = cursor->next;
 
     /* create a new node */
-    wordPair* new_node =  addWordPair(NULL, word1, word2, counter);
+    wordPair* new_node =  AddWordPair(NULL, word1, word2, counter);
     cursor->next = new_node;
 
     return head;
@@ -289,22 +289,22 @@ wordPair* WordListImport() {
         // //add this user to a a new node
         //wordPair *newPair = NULL;
         //newPair = AddWordPair(newPair, firstWordArray, secondWordArray, wordPairCounter);
-        head = apendWord(head, firstWordArray, secondWordArray, wordPairCounter);
+        head = appendWord(head, firstWordArray, secondWordArray, wordPairCounter);
     }
     fclose(hangmanText);
     return head;
 }
 
-void traverseUsers(userNode* head, callback f){
-    node* cursor = head;
+void traverseUsers(userNode* head, callbackUser f){
+    userNode* cursor = head;
     while(cursor != NULL){
         f(cursor);
         cursor = cursor->next;
     }
 }
 
-void traverseWords(wordPair* head, callback f){
-    node* cursor = head;
+void traverseWords(wordPair* head, callbackWord f){
+    wordPair* cursor = head;
     while(cursor != NULL){
         f(cursor);
         cursor = cursor->next;
@@ -386,7 +386,6 @@ int TestCharacter(char receivedChar) {
     int lowerCaseChar = 0;
     char letterArray[] = {'a','b','c','d','e','f','g','h','i','j','k','l','m', \
                         'n','o','p','q','r','s','t','u','v','w','x','y','z'};
-
     for (int i=0; i < LETTERS_IN_APLHABET; i++){
         if (receivedChar == letterArray[i]) {
             lowerCaseChar = 1;
@@ -405,8 +404,8 @@ int TestCharacter(char receivedChar) {
 int main (int argc, char *argv[]) {
     userNode* users = NULL;
     wordPair* words = NULL;
-    callback dispUsers = displayUsers;
-    callback dispWords = displayWords;
+    callbackUser dispUsers = displayUsers;
+    callbackWord dispWords = displayWords;
 
     int portNumber;
 	int sockfd, new_fd;  /* listen on sock_fd, new connection on new_fd */
@@ -472,7 +471,6 @@ int main (int argc, char *argv[]) {
       //FORK HERE, HAVE ALL COMMON VALUES LOADED ABOVE
       /*
 		if (!fork()) { // this is the child process
-
 			// Call method to recieve array data - Uncomment this line once function implemented
 			char *results = ReceiveData(new_fd, ARRAY_SIZE);
 			// Print out the array results sent by client
@@ -482,7 +480,6 @@ int main (int argc, char *argv[]) {
             char *testString="password";
             printf("Test string is: [%s] \n", testString);
             printf("Received string is: [%s] \n", results);
-
             //test received string against stored
             if (strcmp(testString, results) == 0) {
                 printf("The received password matches.");
@@ -492,7 +489,6 @@ int main (int argc, char *argv[]) {
             }
 		}
 		close(new_fd);  // parent doesn't need this
-
 		while(waitpid(-1,NULL,WNOHANG) > 0); // clean up child processes
 		*/
 		 if (send(new_fd, "Please enter your username:\n", 40 , 0) \
