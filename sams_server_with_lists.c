@@ -11,7 +11,7 @@
 
 //magic numbers and constants
 #define DEFAULT_PORT_NO 54321
-#define ARRAY_SIZE 8
+#define ARRAY_SIZE 10
 #define STRING_LENGTH 10
 #define BACKLOG 10     /* how many pending connections queue will hold */
 #define RETURNED_ERROR -1
@@ -21,8 +21,11 @@
 #define passwordMaxLength 10
 #define wordMaxLength 15
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 //function declarations
-char *ReceiveData(int socket_identifier, int size);
+char * ReceiveData(int socket_identifier, int size);
 char ReceiveCharacter(int socket_identifier);
 int TestCharacter(char receivedChar);
 
@@ -30,25 +33,27 @@ int TestCharacter(char receivedChar);
 //typedef struct list wordPair;
 
 typedef struct list {
-    char firstWord [wordMaxLength];
-    char secondWord [wordMaxLength];
+    char firstWord[wordMaxLength];
+    char secondWord[wordMaxLength];
     unsigned int wordPairNumber;
-    struct list* next;
-} wordPair;
+    struct list * next;
+}
+wordPair;
 
 //define a structure-linked list to hold users
 //typedef struct node userNode;
 
 typedef struct node {
-  char username [usernameMaxLength];
-  char password [passwordMaxLength];
-  int gamesWon;
-  int gamesPlayed;
-  struct node* next;
-} userNode;
+    char username[usernameMaxLength];
+    char password[passwordMaxLength];
+    int gamesWon;
+    int gamesPlayed;
+    struct node * next;
+}
+userNode;
 
-typedef void (*callbackUser)(userNode* data);
-typedef void (*callbackWord)(wordPair* data);
+typedef void( * callbackUser)(userNode * data);
+typedef void( * callbackWord)(wordPair * data);
 
 //print the authentication details for a single user
 // void PrintUser(userNode *user) {
@@ -56,48 +61,59 @@ typedef void (*callbackWord)(wordPair* data);
 // }
 
 //add a userNode node
-userNode * AddUserNode(userNode *next, char username[], char password[]) {
+userNode * AddUserNode(userNode * next, char username[], char password[]) {
     // if the user is not "Username" and password is not "password"
     /*
     char defaultUsername[] = "Username";
     char defaultPassword[] = "Password";
     if ((strcmp(username, defaultUsername) !=0)&&(strcmp(password, defaultPassword) !=0)) {*/
     // create new userNode to add to list
-    userNode *newNode = (userNode *)malloc(sizeof(userNode));
+    userNode * newNode = (userNode * ) malloc(sizeof(userNode));
     if (newNode == NULL) {
-        return(0);
+        return (0);
     }
     // insert new node
-    strcpy(newNode->username, username);
-    strcpy(newNode->password, password);
-    newNode->gamesWon = 0;
-    newNode->gamesPlayed = 0;
-    newNode->next = next;
+    strcpy(newNode-> username, username);
+    strcpy(newNode-> password, password);
+    newNode-> gamesWon = 0;
+    newNode-> gamesPlayed = 0;
+    newNode-> next = next;
     // printf("Added: Username: %s \t Password: %s\n", newNode->username, newNode->password);
     return newNode;
-  //}
+    //}
 }
 
-userNode* prependUser(userNode* head, char usrn[], char pass[]){
-    userNode* new_node = AddUserNode(head, usrn, pass);
+userNode * prependUser(userNode * head, char usrn[], char pass[]) {
+    userNode * new_node = AddUserNode(head, usrn, pass);
     head = new_node;
     return head;
 }
 
-userNode* appendUser(userNode* head, char usrn[], char pass[])
-{
-    if(head == NULL)
+userNode * appendUser(userNode * head, char usrn[], char pass[]) {
+    if (head == NULL)
         return NULL;
     /* go to the last node */
-    userNode *cursor = head;
-    while(cursor->next != NULL)
-        cursor = cursor->next;
+    userNode * cursor = head;
+    while (cursor-> next != NULL)
+        cursor = cursor-> next;
 
     /* create a new node */
-    userNode* new_node =  AddUserNode(NULL, usrn, pass);
-    cursor->next = new_node;
+    userNode * new_node = AddUserNode(NULL, usrn, pass);
+    cursor-> next = new_node;
 
     return head;
+}
+
+userNode* search(userNode* head, char usrn[]){
+    userNode *cursor = head;
+    while(cursor != NULL){
+        if (strcmp(cursor->username, usrn)==0){
+            return cursor;
+        } else {
+            cursor = cursor->next;
+        }
+    }
+    return NULL;
 }
 
 //print the authentication details for every user
@@ -111,39 +127,38 @@ void PrintAllUserDetails(userNode *head) {
 //****************************
 
 //add a wordPair node
-wordPair * AddWordPair(wordPair *next, char firstWord[], char secondWord[], unsigned int wordPairCounter) {
+wordPair * AddWordPair(wordPair * next, char firstWord[], char secondWord[], unsigned int wordPairCounter) {
     // create new wordPair to add to list
-    wordPair *newPair = (wordPair *)malloc(sizeof(wordPair));
+    wordPair * newPair = (wordPair * ) malloc(sizeof(wordPair));
     if (newPair == NULL) {
-        return(0);
+        return (0);
     }
     // insert new node
-    strcpy(newPair->firstWord, firstWord);
-    strcpy(newPair->secondWord, secondWord);
-    newPair->wordPairNumber = wordPairCounter;
-    newPair->next = next;
+    strcpy(newPair-> firstWord, firstWord);
+    strcpy(newPair-> secondWord, secondWord);
+    newPair-> wordPairNumber = wordPairCounter;
+    newPair-> next = next;
     // printf("Added: Word pair: %d \t First word: %s \t Second word: %s \n", newPair->wordPairNumber, newPair->firstWord, newPair->secondWord);
     return newPair;
 }
 
-wordPair* prependWord(userNode* head, char word1[], char word2[]){
-    wordPair* new_node = AddWordPair(head, word1, word2, 0);
+wordPair * prependWord(wordPair * head, char word1[], char word2[]) {
+    wordPair * new_node = AddWordPair(head, word1, word2, 0);
     head = new_node;
     return head;
 }
 
-wordPair* appendWord(userNode* head, char word1[], char word2[], unsigned int counter)
-{
-    if(head == NULL)
+wordPair * appendWord(wordPair * head, char word1[], char word2[], unsigned int counter) {
+    if (head == NULL)
         return NULL;
     /* go to the last node */
-    wordPair *cursor = head;
-    while(cursor->next != NULL)
-        cursor = cursor->next;
+    wordPair * cursor = head;
+    while (cursor-> next != NULL)
+        cursor = cursor-> next;
 
     /* create a new node */
-    wordPair* new_node =  AddWordPair(NULL, word1, word2, counter);
-    cursor->next = new_node;
+    wordPair * new_node = AddWordPair(NULL, word1, word2, counter);
+    cursor-> next = new_node;
 
     return head;
 }
@@ -159,21 +174,21 @@ void PrintAllWordPairs(wordPair *head) {
 //**************************
 
 //write function to take contents of Authentication.txt to linked list
-userNode* AuthenticationImport() {
-    userNode *head = NULL;
-    FILE *authenticationText;
+userNode * AuthenticationImport() {
+    userNode * head = NULL;
+    FILE * authenticationText;
     //authenticationArray holds fget string before parsing
-    char authenticationArray[passwordMaxLength+usernameMaxLength];
+    char authenticationArray[passwordMaxLength + usernameMaxLength];
     //parsed username from authenticationArray
     char usernameArray[usernameMaxLength];
     //parsed password from authenticationArray
     char passwordArray[passwordMaxLength];
     //initialise arrays with zeros
-    for (int i = 0; i< usernameMaxLength; i++) {
+    for (int i = 0; i < usernameMaxLength; i++) {
         usernameArray[i] = 0;
         passwordArray[i] = 0;
         authenticationArray[i] = 0;
-        authenticationArray[i+10] = 0;
+        authenticationArray[i + 10] = 0;
     }
 
     //open Authentication.txt in read mode
@@ -181,18 +196,18 @@ userNode* AuthenticationImport() {
 
     if (authenticationText == NULL) {
         perror("Error opening Authentication file:");
-        return(-1);
+        return (-1);
     }
 
     //copy values in Authentication.txt to usernameArray and passwordArray, remove spaces somehow
-    fgets(authenticationArray, (usernameMaxLength+passwordMaxLength), authenticationText);
+    fgets(authenticationArray, (usernameMaxLength + passwordMaxLength), authenticationText);
     head = prependUser(head, usernameArray, passwordArray);
 
-    while(fgets(authenticationArray, (usernameMaxLength+passwordMaxLength), authenticationText)) {
+    while (fgets(authenticationArray, (usernameMaxLength + passwordMaxLength), authenticationText)) {
         //populate usernameArray using first 10 values (or until a space or indent) of authenticationArray
         for (int i = 0; i < usernameMaxLength; i++) {
             //read the username one char at a time until hitting space or indent
-            if ((authenticationArray[i] != ' ')&&(authenticationArray[i] != '\t')) {
+            if ((authenticationArray[i] != ' ') && (authenticationArray[i] != '\t')) {
                 usernameArray[i] = authenticationArray[i];
             }
             //terminate string
@@ -205,8 +220,8 @@ userNode* AuthenticationImport() {
         }
         //populate passwordArray using final values (not spaces or indents) of authenticationArray
         int passwordCounter = 0;
-        for (int i = 0; i < (usernameMaxLength+passwordMaxLength); i++) {
-            if ((authenticationArray[i] != ' ')&&(authenticationArray[i] != '\t')) {
+        for (int i = 0; i < (usernameMaxLength + passwordMaxLength); i++) {
+            if ((authenticationArray[i] != ' ') && (authenticationArray[i] != '\t')) {
                 passwordArray[passwordCounter] = authenticationArray[i];
                 authenticationArray[i] = ' ';
                 passwordCounter++;
@@ -226,21 +241,21 @@ userNode* AuthenticationImport() {
     return head;
 }
 
-wordPair* WordListImport() {
-    wordPair* head = NULL;
-    FILE *hangmanText;
+wordPair * WordListImport() {
+    wordPair * head = NULL;
+    FILE * hangmanText;
     //awordArray holds fget string before parsing
-    char wordArray[2*wordMaxLength];
+    char wordArray[2 * wordMaxLength];
     //parsed first word from wordArray
     char firstWordArray[wordMaxLength];
     ////parsed password from authenticationArray
     char secondWordArray[wordMaxLength];
     //initialise arrays with zeros
-    for (int i = 0; i< wordMaxLength; i++) {
+    for (int i = 0; i < wordMaxLength; i++) {
         firstWordArray[i] = 0;
         secondWordArray[i] = 0;
         wordArray[i] = 0;
-        wordArray[i+wordMaxLength] = 0;
+        wordArray[i + wordMaxLength] = 0;
     }
 
     //open Authentication.txt in read mode
@@ -248,7 +263,7 @@ wordPair* WordListImport() {
 
     if (hangmanText == NULL) {
         perror("Error opening hangman_text file");
-        return(-1);
+        return (-1);
     }
 
     //copy values in Authentication.txt to usernameArray and passwordArray, remove spaces somehow
@@ -256,7 +271,7 @@ wordPair* WordListImport() {
     fgets(wordArray, sizeof(wordArray), hangmanText);
     head = prependWord(head, firstWordArray, secondWordArray);
 
-    while(fgets(wordArray, sizeof(wordArray), hangmanText)) {
+    while (fgets(wordArray, sizeof(wordArray), hangmanText)) {
 
         //populate firstWordArray using char values (until a comma) of hangmanText
         for (int i = 0; i < wordMaxLength; i++) {
@@ -275,7 +290,7 @@ wordPair* WordListImport() {
         }
         //populate secondWordArray using final values (not spaces) of wordArray
         int secondWordCounter = 0;
-        for (int i = 0; i < 2*wordMaxLength; i++) {
+        for (int i = 0; i < 2 * wordMaxLength; i++) {
             if (wordArray[i] != ' ') {
                 secondWordArray[secondWordCounter] = wordArray[i];
                 wordArray[i] = ' ';
@@ -295,53 +310,67 @@ wordPair* WordListImport() {
     return head;
 }
 
-void traverseUsers(userNode* head, callbackUser f){
-    userNode* cursor = head;
-    while(cursor != NULL){
+void traverseUsers(userNode * head, callbackUser f) {
+    userNode * cursor = head;
+    while (cursor != NULL) {
         f(cursor);
-        cursor = cursor->next;
+        cursor = cursor-> next;
     }
 }
 
-void traverseWords(wordPair* head, callbackWord f){
-    wordPair* cursor = head;
-    while(cursor != NULL){
+void traverseWords(wordPair * head, callbackWord f) {
+    wordPair * cursor = head;
+    while (cursor != NULL) {
         f(cursor);
-        cursor = cursor->next;
+        cursor = cursor-> next;
     }
 }
 
-void displayUsers(userNode* n){
-    if (n != NULL){
-        printf("%s ", n->username);
-        printf("%s\n", n->password);
+void displayUsers(userNode * n) {
+    if (n != NULL) {
+        printf("%s ", n-> username);
+        printf("%s\n", n-> password);
     }
 }
 
-void displayWords(wordPair* n){
-    if (n != NULL){
-        printf("%s ", n->firstWord);
-        printf("%s\n", n->secondWord);
+void displayWords(wordPair * n) {
+    if (n != NULL) {
+        printf("%s ", n-> firstWord);
+        printf("%s\n", n-> secondWord);
     }
 }
 
-char *ReceiveData(int socket_identifier, int size) {
-
-	int numberOfBytes = 0;
-	unsigned short networkValue;
-	char *receivedData = malloc(sizeof(char)*size);
-
-	for (int i = 0; i < size; i++) {
-		if ((numberOfBytes = recv(socket_identifier, &networkValue, sizeof(unsigned short), 0)) \
-    == RETURNED_ERROR) {
-			perror("recv");
-			exit(EXIT_FAILURE);
+void SendString(int socket_id, char *string, int stringLength) {
+	//pad out string with zeros as required
+	if (stringLength < ARRAY_SIZE) {
+		for (int i = stringLength; i < ARRAY_SIZE; i++){
+			string[i] = 0;
 		}
-		receivedData[i] = ntohs(networkValue);
 	}
-  //terminate string
-  // receivedData[size] = '\0';
-	return receivedData;
+	for (int i = 0; i < ARRAY_SIZE; i++) {
+		unsigned short networkValue = htons(string[i]);
+		send(socket_id, &networkValue, sizeof(unsigned short), 0);
+		// printf("String[%d] = %c\n", i, string[i]);
+	}
+	fflush(stdout);
+}
+
+char * ReceiveData(int socket_identifier, int size) {
+
+    int numberOfBytes = 0;
+    unsigned short networkValue;
+    char * receivedData = malloc(sizeof(char) * size);
+
+    for (int i = 0; i < size; i++) {
+        if ((numberOfBytes = recv(socket_identifier, & networkValue, sizeof(unsigned short), 0)) == RETURNED_ERROR) {
+            perror("recv");
+            exit(EXIT_FAILURE);
+        }
+        receivedData[i] = ntohs(networkValue);
+    }
+    //terminate string
+    // receivedData[size] = '\0';
+    return receivedData;
 }
 
 /*
@@ -350,31 +379,43 @@ Known issues: NOT YET TESTED.
 Thoughts: Should we test for letter (i.e., reject numbers or punctuation)
 */
 char ReceiveCharacter(int socket_identifier) {
-  int numberOfBytes = 0;
-  unsigned short networkValue;
-  char receivedCharacters[2];
-	char receivedChar;
+    int numberOfBytes = 0;
+    unsigned short networkValue;
+    char receivedCharacters[2];
+    char receivedChar;
 
-  //this might need to be re-written so the server waits on a character before acting
-	for (int i = 0; i < 2; i++) {
-  	if ((numberOfBytes = recv(socket_identifier, &networkValue, sizeof(unsigned short), 0)) \
-  	== RETURNED_ERROR) {
-    perror("recv");
-    exit(EXIT_FAILURE);
-  	}
-  	receivedCharacters[i] = ntohs(networkValue);
-	}
-	receivedChar = receivedCharacters[0];
-	return receivedChar;
-//   //here is where we test received character, reply to client if not valid
-//   if (TestCharacter(receivedChar) == 0) {
-//     send(socket_identifier, "Invalid choice. Please choose a lowercase letter.\n", 40 , 0);
-//   }
-//   //note that this function might return receivedChar even if it is invalid; fix this
-//   else {
-//     return receivedChar;
-//   }
-// return 0;
+    //this might need to be re-written so the server waits on a character before acting
+    for (int i = 0; i < 2; i++) {
+        if ((numberOfBytes = recv(socket_identifier, & networkValue, sizeof(unsigned short), 0)) == RETURNED_ERROR) {
+            perror("recv");
+            exit(EXIT_FAILURE);
+        }
+        receivedCharacters[i] = ntohs(networkValue);
+    }
+    receivedChar = receivedCharacters[0];
+    return receivedChar;
+    //   //here is where we test received character, reply to client if not valid
+    //   if (TestCharacter(receivedChar) == 0) {
+    //     send(socket_identifier, "Invalid choice. Please choose a lowercase letter.\n", 40 , 0);
+    //   }
+    //   //note that this function might return receivedChar even if it is invalid; fix this
+    //   else {
+    //     return receivedChar;
+    //   }
+    // return 0;
+}
+
+void SendInt(int sockfd, int integer){
+    unsigned short netval = htons(integer);
+    send(sockfd, &netval, sizeof(unsigned short), 0);
+}
+
+int ReceiveInt(int sockfd){
+    int integer;
+    unsigned short netval;
+    recv(sockfd, & netval, sizeof(unsigned short), 0);
+    integer = ntohs(netval);
+    return integer;
 }
 
 /*
@@ -394,58 +435,170 @@ int TestCharacter(char receivedChar) {
     }
     return lowerCaseChar;
     */
-    if (receivedChar >= 'a' && receivedChar <= 'z'){
+    if (receivedChar >= 'a' && receivedChar <= 'z') {
         return 1;
     } else {
         return 0;
     }
 }
 
-int main (int argc, char *argv[]) {
-    userNode* users = NULL;
-    wordPair* words = NULL;
+void PlayHangman(char *object[], int obj_size, char *obj_type[], int type_size, userNode *user, int new_fd)
+{
+    int size1 = obj_size;
+    int size2 = type_size;
+    char name[10], word1[size1], word2[size2];
+    if (user == NULL){
+        printf("ERROR");
+    }
+    userNode* acc = user;
+    strcpy(name, acc->username);
+    printf("user: %s", name);
+    strcpy(word1, object);
+    strcpy(word2, obj_type);
+    printf("words: %s %s", word1, word2);
+
+    int obj[size1];// boolean array testing whether a letter was guessed
+    int type[size2];
+    memset(obj, 0, size1*sizeof(int));
+    memset(type, 0, size2*sizeof(int));
+    //int type[word2_len] = {0};
+
+    char letters[20] = { NULL };
+    //memset(letters, 0, 20*sizeof(char));
+
+    char progress[50] = { NULL };
+
+    char str_spc[2], str_word[2];
+    str_spc[1] = '\0';
+    str_word[1] = '\0';
+    char spc = ' ';
+    str_spc[0] = spc;
+
+    char c;
+    char *raw;
+    char undr[] = "_ ";
+    char space[] = "  ";
+    int endgame = 0;
+    //int num_guesses = 20;
+    int num_guesses = MIN((size1 + size2 + 10),26);
+    while (!endgame){
+        SendInt(new_fd, num_guesses);
+        memset(progress, 0, sizeof progress);
+        for (int i=0;i<size1;i++){
+            if (!obj[i]){
+                //printf("_ ");
+                strcat(progress, undr);
+            } else {
+                //printf("%c ", word1[i]);
+                str_word[0] = word1[i];
+                strcat(progress, str_word);
+                strcat(progress, str_spc);
+            }
+        }
+        //printf("  ");
+        strcat(progress, space);
+        for (int i=0;i<size2;i++){
+            if (!type[i]){
+                //printf("_ ");
+                strcat(progress, undr);
+            } else {
+                //printf("%c ", word2[i]);
+                str_word[0] = word2[i];
+                strcat(progress, str_word);
+                strcat(progress, str_spc);
+            }
+        }
+        ReceiveInt(new_fd);
+        send(new_fd, progress, 60, 0);
+        //c[0] = getchar();
+        endgame = 1;
+        for (int i=0;i<size1;i++){
+            if (!obj[i]){ // checking all true for boolean arrays
+                endgame = 0;
+            }
+        }
+        for (int i=0;i<size2;i++){
+            if (!type[i]){
+                endgame = 0;
+            }
+        }
+        if (!num_guesses){
+            endgame = 1;
+        }
+        ReceiveInt(new_fd);
+        SendInt(new_fd, endgame);
+        if (num_guesses > 0 && !endgame){
+            //scanf(" %c", &c[0]);
+            //c = ReceiveData(new_fd, STRING_LENGTH);
+            raw = ReceiveData(new_fd, STRING_LENGTH);
+            c = raw[0];
+        }
+        //ClearScreen();
+        num_guesses -= 1;
+        for (int i=0;i<size1;i++){
+            if (c == word1[i]){
+                // setting boolean array depending if letter was guessed
+                obj[i] = 1;
+            }
+        }
+        for (int i=0;i<size2;i++){
+            if (c == word2[i]){
+                // setting boolean array depending if letter was guessed
+                type[i] = 1;
+            }
+        }
+
+    }
+    if(num_guesses > 0){
+        printf("Well done %s You won this round of Hangman!\n", name);
+    } else {
+        printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", name);
+    }
+}
+
+int main(int argc, char * argv[]) {
+    userNode * users = NULL;
+    wordPair * words = NULL;
     callbackUser dispUsers = displayUsers;
     callbackWord dispWords = displayWords;
 
     int portNumber;
-	int sockfd, new_fd;  /* listen on sock_fd, new connection on new_fd */
-	struct sockaddr_in my_addr;    /* my address information */
-	struct sockaddr_in their_addr; /* connector's address information */
-	socklen_t sin_size;
+    int sockfd, new_fd; /* listen on sock_fd, new connection on new_fd */
+    struct sockaddr_in my_addr; /* my address information */
+    struct sockaddr_in their_addr; /* connector's address information */
+    socklen_t sin_size;
 
-	//If no port number argument is recieved, show message, use default port
-	if (argc != ARGUMENTS_EXPECTED) {
-		fprintf(stderr,"Defaulting to port 54321.\n");
+    //If no port number argument is recieved, show message, use default port
+    if (argc != ARGUMENTS_EXPECTED) {
+        fprintf(stderr, "Defaulting to port 54321.\n");
         portNumber = DEFAULT_PORT_NO;
-	}
+    }
 
-	/* generate the socket */
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == RETURNED_ERROR) {
-		perror("socket");
-		exit(1);
-	}
+    /* generate the socket */
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == RETURNED_ERROR) {
+        perror("socket");
+        exit(1);
+    }
 
-	/* generate the end point */
-	my_addr.sin_family = AF_INET;         /* host byte order */
-	my_addr.sin_port = htons(portNumber);     /* short, network byte order */
-	my_addr.sin_addr.s_addr = INADDR_ANY; /* auto-fill with my IP */
+    /* generate the end point */
+    my_addr.sin_family = AF_INET; /* host byte order */
+    my_addr.sin_port = htons(portNumber); /* short, network byte order */
+    my_addr.sin_addr.s_addr = INADDR_ANY; /* auto-fill with my IP */
 
+    /* bind the socket to the end point */
+    if (bind(sockfd, (struct sockaddr * ) & my_addr, sizeof(struct sockaddr)) == RETURNED_ERROR) {
+        perror("bind");
+        exit(1);
+    }
 
-	/* bind the socket to the end point */
-	if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) \
-	== RETURNED_ERROR) {
-		perror("bind");
-		exit(1);
-	}
+    /* start listnening */
+    if (listen(sockfd, BACKLOG) == RETURNED_ERROR) {
+        perror("listen");
+        exit(1);
+    }
 
-	/* start listnening */
-	if (listen(sockfd, BACKLOG) == RETURNED_ERROR) {
-		perror("listen");
-		exit(1);
-	}
-
-	//this message may not be necessary
-	printf("server starts listnening on port %d...\n", portNumber);
+    //this message may not be necessary
+    printf("server starts listnening on port %d...\n", portNumber);
 
     //import word list and authentication details
     words = WordListImport();
@@ -456,20 +609,18 @@ int main (int argc, char *argv[]) {
     traverseUsers(users, dispUsers);
     printf("Authentication details imported!\n");
 
-	/* repeat: accept, send, close the connection */
-	/* for every accepted connection, use a separate process or thread to serve it */
-	while(1) {  /* main accept() loop */
-		sin_size = sizeof(struct sockaddr_in);
-		if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, \
-		&sin_size)) == RETURNED_ERROR) {
-			perror("accept");
-			continue;
-		}
-		printf("server: got connection from %s\n", \
-			inet_ntoa(their_addr.sin_addr));
+    /* repeat: accept, send, close the connection */
+    /* for every accepted connection, use a separate process or thread to serve it */
+    while (1) { /* main accept() loop */
+        sin_size = sizeof(struct sockaddr_in);
+        if ((new_fd = accept(sockfd, (struct sockaddr * ) & their_addr, & sin_size)) == RETURNED_ERROR) {
+            perror("accept");
+            continue;
+        }
+        printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
 
-      //FORK HERE, HAVE ALL COMMON VALUES LOADED ABOVE
-      /*
+        //FORK HERE, HAVE ALL COMMON VALUES LOADED ABOVE
+        /*
 		if (!fork()) { // this is the child process
 			// Call method to recieve array data - Uncomment this line once function implemented
 			char *results = ReceiveData(new_fd, ARRAY_SIZE);
@@ -491,75 +642,93 @@ int main (int argc, char *argv[]) {
 		close(new_fd);  // parent doesn't need this
 		while(waitpid(-1,NULL,WNOHANG) > 0); // clean up child processes
 		*/
-		 if (send(new_fd, "Please enter your username:\n", 40 , 0) \
-         == RETURNED_ERROR) {
-             perror("send");
-           close(new_fd);
-          //  exit(0);
-         }
-         printf("I told the guy to send a username...\n");
-
-         //wait for string to be received
-         //this might need to be in a control structure, wait until a string is received
-         char *receivedUsername = ReceiveData(new_fd, STRING_LENGTH);
-
-         //test the received username, for now use simple string comparison
-         char testUsername[] = "Maolin";
-         //if the received and stored usernames match
-         if (strcmp(receivedUsername, testUsername) == 0){
-           //send a message prompting for a password
-           if (send(new_fd, "Please enter your password:\n", 40 , 0) \
-           == RETURNED_ERROR) {
-               perror("send");
-             close(new_fd);
+        if (send(new_fd, "Please enter your username-->", 40, 0) == RETURNED_ERROR) {
+            perror("send");
+            close(new_fd);
             //  exit(0);
-           }
-              printf("I told the guy to send a password...\n");
-             //if the received and stored usernames DON'T match
-         } else {
-           if (send(new_fd, "Invalid username; closing connection.\n", 40 , 0) \
-           == RETURNED_ERROR) {
-             perror("send");
-             close(new_fd);
-            //  exit(0);
-           } else {
-             close(new_fd);
-            //  exit(0);
-           }
-         }
+        }
+        printf("I told the guy to send a username...\n");
 
-           //receive a password
-           char *receivedPassword = ReceiveData(new_fd, STRING_LENGTH);
-           //test the received username, for now use simple string comparison
-           char testPassword[] = "123456";
-           //if the received and stored passwords match
-           if (strcmp(receivedPassword, testPassword) != 0){
-                 if (send(new_fd, "Invalid password; closing connection.\n", 40 , 0) \
-                 == RETURNED_ERROR) {
-                    perror("send");
-                    close(new_fd);
-                    //  exit(0);
-                        } else {
-                        close(new_fd);
-                        //  exit(0);
-                        }
+        //wait for string to be received
+        //this might need to be in a control structure, wait until a string is received
+        char * receivedUsername = ReceiveData(new_fd, STRING_LENGTH);
+
+        //test the received username, for now use simple string comparison
+        char testUsername[] = "Maolin";
+        //if the received and stored usernames match
+        if (strcmp(receivedUsername, testUsername) == 0) {
+            //send a message prompting for a password
+            if (send(new_fd, "Please enter your password-->", 40, 0) == RETURNED_ERROR) {
+                perror("send");
+                close(new_fd);
+                //  exit(0);
+            }
+            printf("I told the guy to send a password...\n");
+            //if the received and stored usernames DON'T match
+        } else {
+            if (send(new_fd, "Invalid username; closing connection.\n", 40, 0) == RETURNED_ERROR) {
+                perror("send");
+                close(new_fd);
+                //  exit(0);
             } else {
-                    send(new_fd, "Welcome.\n", 40 , 0);
-                    printf("Login accepted.\n");
-                }
+                close(new_fd);
+                //  exit(0);
+            }
+        }
 
-    //by this point, the username and password should have been verified against
-    //stored values
+        //receive a password
+        char * receivedPassword = ReceiveData(new_fd, STRING_LENGTH);
+        //test the received username, for now use simple string comparison
+        char testPassword[] = "123456";
+        //if the received and stored passwords match
+        if (strcmp(receivedPassword, testPassword) != 0) {
+            if (send(new_fd, "Invalid password; closing connection.\n", 40, 0) == RETURNED_ERROR) {
+                perror("send");
+                close(new_fd);
+                //  exit(0);
+            } else {
+                close(new_fd);
+                //  exit(0);
+            }
+        } else {
+            send(new_fd, "Welcome.\n", 40, 0);
+            printf("Login accepted.\n");
+        }
 
-    //receive integer, 1-3 choosing action
-    char *choice = ReceiveData(new_fd, STRING_LENGTH);
-    printf("The client chose: %s\n", choice);
+        //by this point, the username and password should have been verified against
+        //stored values
 
-
-	}
-//this function closes an accepted connection, put it outside the loop
-	close(new_fd);  /* parent doesn't need this */
-	//once thread pool is implemented, we will need to return thread to pool here
-  return 0;
+        //receive integer, 1-3 choosing action
+        //char choice = ReceiveData(new_fd, STRING_LENGTH);
+        int end = 0;
+        while(!end){
+            char * raw = ReceiveData(new_fd, STRING_LENGTH);
+            char choice = raw[0];
+            //printf("The client chose: %c\n", &choice);
+            switch (choice)
+            {
+            case '1':
+                printf("option was 1");// testing to see if this option was chosen
+                userNode *mao = search(users, "Maolin");
+                const char *words[] = {"snek", "snake"};
+                const int sizes[] = {strlen(words[0]), strlen(words[1])};
+                PlayHangman(words[0], sizes[0], words[1], sizes[1], mao, new_fd);
+                break;
+            case '2':
+                printf("option was 2");
+                break;
+            case '3':
+                printf("option was 3");
+                end = 1;
+                break;
+            default:
+                printf("Invalid option");
+            }
+        }
+    }
+    //this function closes an accepted connection, put it outside the loop
+    close(new_fd); /* parent doesn't need this */
+    //once thread pool is implemented, we will need to return thread to pool here
+    return 0;
 
 }

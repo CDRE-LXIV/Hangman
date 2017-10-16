@@ -41,6 +41,11 @@ void SendChar(int socket_id, char character) {
 	SendString(socket_id, singleCharString, stringLength);
 }
 
+void SendInt(int sockfd, int integer){
+    unsigned short netval = htons(integer);
+    send(sockfd, &netval, sizeof(unsigned short), 0);
+}
+
 void ReceiveData(int sockfd) {
 	int numberOfBytes;
 	char buf[MAXDATASIZE];
@@ -49,12 +54,20 @@ void ReceiveData(int sockfd) {
 		exit(1);
 	}
 	buf[numberOfBytes] = '\0';
-	printf("%s\n",buf);
+	printf("%s",buf);
 }
 
-void ClearScreen() {
-  const char *CLEAR_SCREEN_ANSI = "\e[1;1H\e[2J";
-  write(STDOUT_FILENO, CLEAR_SCREEN_ANSI, 12);
+int ReceiveInt(int sockfd){
+    int integer;
+    unsigned short netval;
+    recv(sockfd, & netval, sizeof(unsigned short), 0);
+    integer = ntohs(netval);
+}
+
+void ClearScreen(){
+    //system("cls||clear"); // Windows
+    //printf("\033[2J"); // X-Term
+    printf("\e[1;1H\e[2J"); // other ANSI terms or POSIX
 }
 
 //draw the welcome message template
@@ -62,16 +75,64 @@ void DisplayWelcomeMessage() {
 	printf("\n=============================================\n");
 	printf("Welcome to the Online Hangman Gaming System\n");
 	printf("=============================================\n\n");
-	printf("You are required to log on with your registered Username and Password\n");
+	printf("You are required to logon with your registered Username and Password\n\n");
 }
 
 void DisplayMainMenu() {
-	printf("\nWelcome to the Online Hangman Gaming System\n\n\n\n");
-	printf("Please enter a selection\n");
-	printf("<1> Play Hangman\n");
-	printf("<2> Show Leaderboard\n");
-	printf("<3> Quit\n\n");
-	printf("Select option 1-3:\n");
+	printf("\nWelcome to the Hangman Gaming System\n\n");
+    printf("Please enter a selection\n");
+    printf("<1> Play Hangman\n");
+    printf("<2> Show Leaderboard\n");
+    printf("<3> Quit\n");
+    printf("Select option 1-3 ->");
+}
+
+void PlayHangman(char *username[], int sockfd)
+{
+    char letters[20] = { NULL };
+    //memset(letters, 0, 20*sizeof(char));
+
+    char c[2];
+    int endgame = 0;
+    int num_guesses = 0;
+    //int num_guesses = 20;
+    while (!endgame){
+        ClearScreen();
+        num_guesses = ReceiveInt(sockfd);
+        SendInt(sockfd, 1);
+        printf("\nGuessed Letters %s\n", letters);
+        printf("Number of guesses left: %d\n", num_guesses);
+        printf("Word: ");
+        ReceiveData(sockfd);
+        SendInt(sockfd, 1);
+        printf("\n");
+        printf("Enter your guess - ");
+        //c[0] = getchar();
+        endgame = 1;
+        endgame = ReceiveInt(sockfd);
+        if (!num_guesses){
+            endgame = 1;
+        }
+        if (num_guesses > 0 && !endgame){
+            scanf(" %c", &c[0]);
+            SendString(sockfd, c, 2);
+            //c[0] = getchar();
+        }
+        //ClearScreen();
+        strcat(letters, c);
+    }
+    printf("\nGame over\n");
+    if(num_guesses > 0){
+        printf("Well done %s You won this round of Hangman!\n", username);
+    } else {
+        printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", username);
+    }
+    //system("pause");
+    printf("Press ENTER to continue.");
+    char r[100];
+    r[0] = getchar();
+    r[0] = getchar();
+    //getchar();
 }
 
 int main(int argc, char *argv[]) {
@@ -115,8 +176,9 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	DisplayWelcomeMessage();
-
-	while(1){
+    //char key;
+    char c[2];
+	//while(1){
         //client should be connected, receive message
         ReceiveData(sockfd);
 
@@ -140,17 +202,37 @@ int main(int argc, char *argv[]) {
         ClearScreen();
         //receive welcome message
         ReceiveData(sockfd);
+        while(1){
         // ClearScreen();
         //draw the menu
         DisplayMainMenu();
         //wait for key input 1-3
-        char key = ' ';
-        while ((key != '1')&&(key != '2')&&(key != '3')){
-            key = getchar();
+
+        //char key = ' ';
+        //while ((key != '1')&&(key != '2')&&(key != '3')){
+            //key = getchar();
+            scanf(" %c", &c[0]);
+            SendString(sockfd, c, 2);
+        //}
+        switch (c[0])
+        {
+        case '1':
+            printf("option was 1");// testing to see if this option was chosen
+            PlayHangman(username, sockfd);
+            break;
+        case '2':
+            printf("option was 2");
+            break;
+        case '3':
+            printf("option was 3");
+            exit(EXIT_SUCCESS);
+            break;
+        default:
+            printf("Invalid option");
         }
-        SendChar(sockfd, key);
+        //SendChar(sockfd, c[0]);
         ClearScreen();
-        printf("You picked: %c\n", key);
+        //printf("You picked: %c\n", key);
 	}	//end while loop
     close(sockfd);
 
