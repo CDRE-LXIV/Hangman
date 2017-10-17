@@ -16,7 +16,6 @@
 #define BACKLOG 10     /* how many pending connections queue will hold */
 #define RETURNED_ERROR -1
 #define ARGUMENTS_EXPECTED 2
-#define LETTERS_IN_APLHABET 26
 #define usernameMaxLength 10
 #define passwordMaxLength 10
 #define wordMaxLength 15
@@ -26,7 +25,6 @@
 
 //function declarations
 char * ReceiveData(int socket_identifier, int size);
-char ReceiveCharacter(int socket_identifier);
 int TestCharacter(char receivedChar);
 
 //define a structure-linked list to hold word pairs
@@ -52,13 +50,8 @@ typedef struct node {
 }
 userNode;
 
-typedef void( * callbackUser)(userNode * data);
+typedef void( * callbackUser)(userNode * data, int socket_id);
 typedef void( * callbackWord)(wordPair * data);
-
-//print the authentication details for a single user
-// void PrintUser(userNode *user) {
-//   printf("Username=%s \t Password=%s\n", user->username, user->password);
-// }
 
 //add a userNode node
 userNode * AddUserNode(userNode * next, char username[], char password[]) {
@@ -104,7 +97,7 @@ userNode * appendUser(userNode * head, char usrn[], char pass[]) {
     return head;
 }
 
-userNode* search(userNode* head, char usrn[]){
+userNode* searchUser(userNode* head, char usrn[]){
     userNode *cursor = head;
     while(cursor != NULL){
         if (strcmp(cursor->username, usrn)==0){
@@ -115,16 +108,6 @@ userNode* search(userNode* head, char usrn[]){
     }
     return NULL;
 }
-
-//print the authentication details for every user
-/*
-void PrintAllUserDetails(userNode *head) {
-    for ( ; head != NULL; head = head->next) {
-        printf("Username=%s \t\t Password=%s\n", head->username, head->password);
-    }
-}
-*/
-//****************************
 
 //add a wordPair node
 wordPair * AddWordPair(wordPair * next, char firstWord[], char secondWord[], unsigned int wordPairCounter) {
@@ -163,15 +146,27 @@ wordPair * appendWord(wordPair * head, char word1[], char word2[], unsigned int 
     return head;
 }
 
-//print every wordPair
-/*
-void PrintAllWordPairs(wordPair *head) {
-    for ( ; head != NULL; head = head->next) {
-      printf("First Word=%s \t Second Word=%s \t Word Pair Number:%d\n ", head->firstWord, head->secondWord, head->wordPairNumber);
+wordPair * searchWord(wordPair* head, int number){
+    wordPair *cursor = head;
+    while(cursor != NULL){
+        if (cursor->wordPairNumber == number){
+            return cursor;
+        } else {
+            cursor = cursor->next;
+        }
     }
+    return NULL;
 }
-*/
-//**************************
+
+int wordCount(wordPair* head){
+    wordPair * cursor = head;
+    int c = 0;
+    while(cursor != NULL){
+        c++;
+        cursor = cursor-> next;
+    }
+    return c;
+}
 
 //write function to take contents of Authentication.txt to linked list
 userNode * AuthenticationImport() {
@@ -200,9 +195,11 @@ userNode * AuthenticationImport() {
     }
 
     //copy values in Authentication.txt to usernameArray and passwordArray, remove spaces somehow
-    fgets(authenticationArray, (usernameMaxLength + passwordMaxLength), authenticationText);
-    head = prependUser(head, usernameArray, passwordArray);
 
+    fgets(authenticationArray, (usernameMaxLength + passwordMaxLength), authenticationText);
+    //head = prependUser(head, usernameArray, passwordArray);
+
+    int cnt = 0;
     while (fgets(authenticationArray, (usernameMaxLength + passwordMaxLength), authenticationText)) {
         //populate usernameArray using first 10 values (or until a space or indent) of authenticationArray
         for (int i = 0; i < usernameMaxLength; i++) {
@@ -234,7 +231,13 @@ userNode * AuthenticationImport() {
         //add this user to a a new node
         //userNode *head = NULL;
         //AddUserNode(head, usernameArray, passwordArray);
-        head = appendUser(head, usernameArray, passwordArray);
+        if (!cnt){
+            head = prependUser(head, usernameArray, passwordArray);
+            cnt++;
+        }
+        else{
+            head = appendUser(head, usernameArray, passwordArray);
+        }
         //newPair = AddWordPair(newPair, firstWordArray, secondWordArray, wordPairCounter);
     }
     fclose(authenticationText);
@@ -268,9 +271,9 @@ wordPair * WordListImport() {
 
     //copy values in Authentication.txt to usernameArray and passwordArray, remove spaces somehow
     unsigned int wordPairCounter = 0;
-    fgets(wordArray, sizeof(wordArray), hangmanText);
-    head = prependWord(head, firstWordArray, secondWordArray);
-
+    //fgets(wordArray, sizeof(wordArray), hangmanText);
+    //head = prependWord(head, firstWordArray, secondWordArray);
+    int cnt = 0;
     while (fgets(wordArray, sizeof(wordArray), hangmanText)) {
 
         //populate firstWordArray using char values (until a comma) of hangmanText
@@ -291,7 +294,7 @@ wordPair * WordListImport() {
         //populate secondWordArray using final values (not spaces) of wordArray
         int secondWordCounter = 0;
         for (int i = 0; i < 2 * wordMaxLength; i++) {
-            if (wordArray[i] != ' ') {
+            if (wordArray[i] != '\r' && wordArray[i] != '\n' && wordArray[i] != ' ') {
                 secondWordArray[secondWordCounter] = wordArray[i];
                 wordArray[i] = ' ';
                 secondWordCounter++;
@@ -304,16 +307,22 @@ wordPair * WordListImport() {
         // //add this user to a a new node
         //wordPair *newPair = NULL;
         //newPair = AddWordPair(newPair, firstWordArray, secondWordArray, wordPairCounter);
-        head = appendWord(head, firstWordArray, secondWordArray, wordPairCounter);
+        if (!cnt){
+            head = prependWord(head, firstWordArray, secondWordArray);
+            cnt++;
+        }
+        else {
+            head = appendWord(head, firstWordArray, secondWordArray, wordPairCounter);
+        }
     }
     fclose(hangmanText);
     return head;
 }
 
-void traverseUsers(userNode * head, callbackUser f) {
+void traverseUsers(userNode * head, int socket_id, callbackUser f) {
     userNode * cursor = head;
     while (cursor != NULL) {
-        f(cursor);
+        f(cursor, socket_id);
         cursor = cursor-> next;
     }
 }
@@ -331,6 +340,33 @@ void displayUsers(userNode * n) {
         printf("%s ", n-> username);
         printf("%s\n", n-> password);
     }
+}
+
+void sendUser(userNode * n, int socket_id){
+    if (n != NULL && n->gamesPlayed > 0){
+        char name[usernameMaxLength];
+        strcpy(name, n->username);
+        int played = n->gamesPlayed;
+        int won = n->gamesWon;
+        SendInt(socket_id, 0);
+        ReceiveInt(socket_id);
+        send(socket_id, name, 10, 0);
+        ReceiveInt(socket_id);
+        SendInt(socket_id, won);
+        ReceiveInt(socket_id);
+        SendInt(socket_id, played);
+        ReceiveInt(socket_id);
+    }
+}
+
+void sendLeaderboard(userNode* head, int socket_id)
+{
+    userNode * users = head;
+    while (users != NULL) {
+        sendUser(users, socket_id);
+        users = users-> next;
+    }
+    SendInt(socket_id, 1);
 }
 
 void displayWords(wordPair * n) {
@@ -373,47 +409,15 @@ char * ReceiveData(int socket_identifier, int size) {
     return receivedData;
 }
 
-/*
-Function for receiving a single char, for the Hangman game itself.
-Known issues: NOT YET TESTED.
-Thoughts: Should we test for letter (i.e., reject numbers or punctuation)
-*/
-char ReceiveCharacter(int socket_identifier) {
-    int numberOfBytes = 0;
-    unsigned short networkValue;
-    char receivedCharacters[2];
-    char receivedChar;
-
-    //this might need to be re-written so the server waits on a character before acting
-    for (int i = 0; i < 2; i++) {
-        if ((numberOfBytes = recv(socket_identifier, & networkValue, sizeof(unsigned short), 0)) == RETURNED_ERROR) {
-            perror("recv");
-            exit(EXIT_FAILURE);
-        }
-        receivedCharacters[i] = ntohs(networkValue);
-    }
-    receivedChar = receivedCharacters[0];
-    return receivedChar;
-    //   //here is where we test received character, reply to client if not valid
-    //   if (TestCharacter(receivedChar) == 0) {
-    //     send(socket_identifier, "Invalid choice. Please choose a lowercase letter.\n", 40 , 0);
-    //   }
-    //   //note that this function might return receivedChar even if it is invalid; fix this
-    //   else {
-    //     return receivedChar;
-    //   }
-    // return 0;
-}
-
 void SendInt(int sockfd, int integer){
     unsigned short netval = htons(integer);
     send(sockfd, &netval, sizeof(unsigned short), 0);
 }
 
-int ReceiveInt(int sockfd){
+int ReceiveInt(int socket_id){
     int integer;
     unsigned short netval;
-    recv(sockfd, & netval, sizeof(unsigned short), 0);
+    recv(socket_id, & netval, sizeof(unsigned short), 0);
     integer = ntohs(netval);
     return integer;
 }
@@ -442,7 +446,7 @@ int TestCharacter(char receivedChar) {
     }
 }
 
-void PlayHangman(char *object[], int obj_size, char *obj_type[], int type_size, userNode *user, int new_fd)
+int PlayHangman(char *object[], int obj_size, char *obj_type[], int type_size, userNode *user, int new_fd)
 {
     int size1 = obj_size;
     int size2 = type_size;
@@ -551,8 +555,10 @@ void PlayHangman(char *object[], int obj_size, char *obj_type[], int type_size, 
     }
     if(num_guesses > 0){
         printf("Well done %s You won this round of Hangman!\n", name);
+        return 1;
     } else {
         printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", name);
+        return 0;
     }
 }
 
@@ -606,7 +612,7 @@ int main(int argc, char * argv[]) {
     printf("Words imported!\n");
 
     users = AuthenticationImport();
-    traverseUsers(users, dispUsers);
+    //traverseUsers(users, dispUsers);
     printf("Authentication details imported!\n");
 
     /* repeat: accept, send, close the connection */
@@ -654,9 +660,11 @@ int main(int argc, char * argv[]) {
         char * receivedUsername = ReceiveData(new_fd, STRING_LENGTH);
 
         //test the received username, for now use simple string comparison
-        char testUsername[] = "Maolin";
+        //char testUsername[] = "Maolin";
+        userNode * user = searchUser(users, receivedUsername);
         //if the received and stored usernames match
-        if (strcmp(receivedUsername, testUsername) == 0) {
+        //if (strcmp(receivedUsername, testUsername) == 0) {
+        if (user != NULL){
             //send a message prompting for a password
             if (send(new_fd, "Please enter your password-->", 40, 0) == RETURNED_ERROR) {
                 perror("send");
@@ -679,9 +687,10 @@ int main(int argc, char * argv[]) {
         //receive a password
         char * receivedPassword = ReceiveData(new_fd, STRING_LENGTH);
         //test the received username, for now use simple string comparison
-        char testPassword[] = "123456";
+        //char testPassword[] = "123456";
         //if the received and stored passwords match
-        if (strcmp(receivedPassword, testPassword) != 0) {
+        //if (strcmp(receivedPassword, testPassword) != 0) {
+        if (strcmp(receivedPassword, user->password) == 0){
             if (send(new_fd, "Invalid password; closing connection.\n", 40, 0) == RETURNED_ERROR) {
                 perror("send");
                 close(new_fd);
@@ -691,7 +700,7 @@ int main(int argc, char * argv[]) {
                 //  exit(0);
             }
         } else {
-            send(new_fd, "Welcome.\n", 40, 0);
+            //send(new_fd, "Welcome.\n", 40, 0);
             printf("Login accepted.\n");
         }
 
@@ -701,26 +710,40 @@ int main(int argc, char * argv[]) {
         //receive integer, 1-3 choosing action
         //char choice = ReceiveData(new_fd, STRING_LENGTH);
         int end = 0;
+        int wins;
+        char choice;
+        //char choices[] = "123";
+        char * raw;
         while(!end){
-            char * raw = ReceiveData(new_fd, STRING_LENGTH);
-            char choice = raw[0];
+            raw = ReceiveData(new_fd, STRING_LENGTH);
+            choice = raw[0];
             //printf("The client chose: %c\n", &choice);
             switch (choice)
             {
             case '1':
+            //if (choice == choices[0]){
                 printf("option was 1");// testing to see if this option was chosen
-                userNode *mao = search(users, "Maolin");
-                const char *words[] = {"snek", "snake"};
-                const int sizes[] = {strlen(words[0]), strlen(words[1])};
-                PlayHangman(words[0], sizes[0], words[1], sizes[1], mao, new_fd);
+                //userNode *mao = searchUser(users, "Maolin");
+                time_t t;
+                srand((unsigned) time(&t));
+                wordPair * word = searchWord(words, rand() % wordCount(words));
+                //const char *words[] = {"snek", "snake"};
+                const int sizes[] = {strlen(word->firstWord), strlen(word->secondWord)};
+                wins = PlayHangman(word->firstWord, sizes[0], word->secondWord, sizes[1], user, new_fd);
+                user->gamesPlayed++;
+                user->gamesWon += wins;
                 break;
+            //}else if (choice == choices[1]){
             case '2':
                 printf("option was 2");
+                sendLeaderboard(users, new_fd);
                 break;
+            //}else if (choice == choices[2]){
             case '3':
                 printf("option was 3");
                 end = 1;
                 break;
+            //}else{
             default:
                 printf("Invalid option");
             }

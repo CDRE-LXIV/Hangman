@@ -30,17 +30,6 @@ void SendString(int socket_id, char *string, int stringLength) {
 	fflush(stdout);
 }
 
-//send a char to hangman_server
-void SendChar(int socket_id, char character) {
-	//send as a string because I don't know how to do otherwise
-	int stringLength = 2;
-	char singleCharString[stringLength];
-	singleCharString[1] = '\0';
-	singleCharString[0] = character;
-
-	SendString(socket_id, singleCharString, stringLength);
-}
-
 void SendInt(int sockfd, int integer){
     unsigned short netval = htons(integer);
     send(sockfd, &netval, sizeof(unsigned short), 0);
@@ -135,6 +124,34 @@ void PlayHangman(char *username[], int sockfd)
     //getchar();
 }
 
+void Leaderboard(int sockfd)
+{
+    int won, played;
+    //int done = 0;
+    //int done = 0;
+    while (!ReceiveInt(sockfd)){
+        //done = ReceiveInt(sockfd);
+        //if (done){ break; }
+        SendInt(sockfd, 0);
+        printf("\n=============================================\n\n");
+        printf("Player - ");
+        ReceiveData(sockfd);
+        printf("\n");
+        SendInt(sockfd, 0);
+        won = ReceiveInt(sockfd);
+        printf("Number of games won - %d\n", won);
+        SendInt(sockfd, 0);
+        played = ReceiveInt(sockfd);
+        printf("Number of games played - %d\n", played);
+        printf("\n=============================================\n\n");
+        SendInt(sockfd, 0);
+    }
+    printf("Press ENTER to continue.");
+    char r[100];
+    r[0] = getchar();
+    r[0] = getchar();
+}
+
 int main(int argc, char *argv[]) {
 	int portNumber;
 	int sockfd, numberOfBytes;
@@ -201,7 +218,7 @@ int main(int argc, char *argv[]) {
         //should now be logged in, draw game area
         ClearScreen();
         //receive welcome message
-        ReceiveData(sockfd);
+        //ReceiveData(sockfd);
         while(1){
         // ClearScreen();
         //draw the menu
@@ -222,6 +239,7 @@ int main(int argc, char *argv[]) {
             break;
         case '2':
             printf("option was 2");
+            Leaderboard(sockfd);
             break;
         case '3':
             printf("option was 3");
