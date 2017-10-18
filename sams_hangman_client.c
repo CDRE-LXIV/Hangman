@@ -53,10 +53,17 @@ int ReceiveInt(int sockfd){
     integer = ntohs(netval);
 }
 
+<<<<<<< HEAD
 void ClearScreen(){
     //system("cls||clear"); // Windows
     //printf("\033[2J"); // X-Term
     printf("\e[1;1H\e[2J"); // other ANSI terms or POSIX
+=======
+void ClearScreen(){
+    //system("cls||clear"); // Windows
+    //printf("\033[2J"); // X-Term
+    printf("\e[1;1H\e[2J"); // other ANSI terms or POSIX
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
 }
 
 //draw the welcome message template
@@ -68,6 +75,7 @@ void DisplayWelcomeMessage() {
 }
 
 void DisplayMainMenu() {
+<<<<<<< HEAD
 	printf("\nWelcome to the Hangman Gaming System\n\n");
     printf("Please enter a selection\n");
     printf("<1> Play Hangman\n");
@@ -103,10 +111,48 @@ void PlayHangman(char *username[], int sockfd)
             endgame = 1;
         }
         if (num_guesses > 0 && !endgame){
+=======
+	printf("\nWelcome to the Hangman Gaming System\n\n");
+    printf("Please enter a selection\n");
+    printf("<1> Play Hangman\n");
+    printf("<2> Show Leaderboard\n");
+    printf("<3> Quit\n");
+    printf("Select option 1-3 ->");
+}
+
+void PlayHangman(char *username[], int sockfd)
+{
+    char letters[20] = { NULL };
+    //memset(letters, 0, 20*sizeof(char));
+
+    char c[2];
+    int endgame = 0;
+    int num_guesses = 0;
+    //int num_guesses = 20;
+    while (!endgame){
+        ClearScreen();
+        num_guesses = ReceiveInt(sockfd);
+        SendInt(sockfd, 1);
+        printf("\nGuessed Letters %s\n", letters);
+        printf("Number of guesses left: %d\n", num_guesses);
+        printf("Word: ");
+        ReceiveData(sockfd);
+        SendInt(sockfd, 1);
+        printf("\n");
+        printf("Enter your guess - ");
+        //c[0] = getchar();
+        endgame = 1;
+        endgame = ReceiveInt(sockfd);
+        if (!num_guesses){
+            endgame = 1;
+        }
+        if (num_guesses > 0 && !endgame){
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
             scanf(" %c", &c[0]);
             SendString(sockfd, c, 2);
             //c[0] = getchar();
         }
+<<<<<<< HEAD
         //ClearScreen();
         strcat(letters, c);
     }
@@ -116,12 +162,27 @@ void PlayHangman(char *username[], int sockfd)
     } else {
         printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", username);
     }
+=======
+        //ClearScreen();
+        strcat(letters, c);
+    }
+    printf("\nGame over\n");
+    if(num_guesses > 0){
+        printf("Well done %s You won this round of Hangman!\n", username);
+    } else {
+        printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", username);
+    }
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
     //system("pause");
     printf("Press ENTER to continue.");
     char r[100];
     r[0] = getchar();
     r[0] = getchar();
+<<<<<<< HEAD
     //getchar();
+=======
+    //getchar();
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
 }
 
 void Leaderboard(int sockfd)
@@ -134,14 +195,22 @@ void Leaderboard(int sockfd)
         //if (done){ break; }
         SendInt(sockfd, 0);
         printf("\n=============================================\n\n");
+<<<<<<< HEAD
         printf("Player - ");
+=======
+        printf("Player - ");
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
         ReceiveData(sockfd);
         printf("\n");
         SendInt(sockfd, 0);
         won = ReceiveInt(sockfd);
         printf("Number of games won - %d\n", won);
         SendInt(sockfd, 0);
+<<<<<<< HEAD
         played = ReceiveInt(sockfd);
+=======
+        played = ReceiveInt(sockfd);
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
         printf("Number of games played - %d\n", played);
         printf("\n=============================================\n\n");
         SendInt(sockfd, 0);
@@ -230,6 +299,7 @@ int main(int argc, char *argv[]) {
             //key = getchar();
             scanf(" %c", &c[0]);
             SendString(sockfd, c, 2);
+<<<<<<< HEAD
         //}
         switch (c[0])
         {
@@ -247,6 +317,25 @@ int main(int argc, char *argv[]) {
             break;
         default:
             printf("Invalid option");
+=======
+        //}
+        switch (c[0])
+        {
+        case '1':
+            printf("option was 1");// testing to see if this option was chosen
+            PlayHangman(username, sockfd);
+            break;
+        case '2':
+            printf("option was 2");
+            Leaderboard(sockfd);
+            break;
+        case '3':
+            printf("option was 3");
+            exit(EXIT_SUCCESS);
+            break;
+        default:
+            printf("Invalid option");
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
         }
         //SendChar(sockfd, c[0]);
         ClearScreen();

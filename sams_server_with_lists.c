@@ -20,7 +20,11 @@
 #define passwordMaxLength 10
 #define wordMaxLength 15
 
+<<<<<<< HEAD
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+=======
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 //function declarations
@@ -74,6 +78,7 @@ userNode * AddUserNode(userNode * next, char username[], char password[]) {
     // printf("Added: Username: %s \t Password: %s\n", newNode->username, newNode->password);
     return newNode;
     //}
+<<<<<<< HEAD
 }
 
 userNode * prependUser(userNode * head, char usrn[], char pass[]) {
@@ -107,6 +112,41 @@ userNode* searchUser(userNode* head, char usrn[]){
         }
     }
     return NULL;
+=======
+}
+
+userNode * prependUser(userNode * head, char usrn[], char pass[]) {
+    userNode * new_node = AddUserNode(head, usrn, pass);
+    head = new_node;
+    return head;
+}
+
+userNode * appendUser(userNode * head, char usrn[], char pass[]) {
+    if (head == NULL)
+        return NULL;
+    /* go to the last node */
+    userNode * cursor = head;
+    while (cursor-> next != NULL)
+        cursor = cursor-> next;
+
+    /* create a new node */
+    userNode * new_node = AddUserNode(NULL, usrn, pass);
+    cursor-> next = new_node;
+
+    return head;
+}
+
+userNode* searchUser(userNode* head, char usrn[]){
+    userNode *cursor = head;
+    while(cursor != NULL){
+        if (strcmp(cursor->username, usrn)==0){
+            return cursor;
+        } else {
+            cursor = cursor->next;
+        }
+    }
+    return NULL;
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
 }
 
 //add a wordPair node
@@ -142,6 +182,7 @@ wordPair * appendWord(wordPair * head, char word1[], char word2[], unsigned int 
     /* create a new node */
     wordPair * new_node = AddWordPair(NULL, word1, word2, counter);
     cursor-> next = new_node;
+<<<<<<< HEAD
 
     return head;
 }
@@ -158,6 +199,24 @@ wordPair * searchWord(wordPair* head, int number){
     return NULL;
 }
 
+=======
+
+    return head;
+}
+
+wordPair * searchWord(wordPair* head, int number){
+    wordPair *cursor = head;
+    while(cursor != NULL){
+        if (cursor->wordPairNumber == number){
+            return cursor;
+        } else {
+            cursor = cursor->next;
+        }
+    }
+    return NULL;
+}
+
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
 int wordCount(wordPair* head){
     wordPair * cursor = head;
     int c = 0;
@@ -260,10 +319,17 @@ wordPair * WordListImport() {
         wordArray[i] = 0;
         wordArray[i + wordMaxLength] = 0;
     }
+<<<<<<< HEAD
 
     //open Authentication.txt in read mode
     hangmanText = fopen("hangman_text.txt", "r");
 
+=======
+
+    //open Authentication.txt in read mode
+    hangmanText = fopen("hangman_text.txt", "r");
+
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
     if (hangmanText == NULL) {
         perror("Error opening hangman_text file");
         return (-1);
@@ -368,6 +434,7 @@ void sendLeaderboard(userNode* head, int socket_id)
     }
     SendInt(socket_id, 1);
 }
+<<<<<<< HEAD
 
 void displayWords(wordPair * n) {
     if (n != NULL) {
@@ -376,6 +443,16 @@ void displayWords(wordPair * n) {
     }
 }
 
+=======
+
+void displayWords(wordPair * n) {
+    if (n != NULL) {
+        printf("%s ", n-> firstWord);
+        printf("%s\n", n-> secondWord);
+    }
+}
+
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
 void SendString(int socket_id, char *string, int stringLength) {
 	//pad out string with zeros as required
 	if (stringLength < ARRAY_SIZE) {
@@ -445,6 +522,7 @@ int TestCharacter(char receivedChar) {
         return 0;
     }
 }
+<<<<<<< HEAD
 
 int PlayHangman(char *object[], int obj_size, char *obj_type[], int type_size, userNode *user, int new_fd)
 {
@@ -591,6 +669,154 @@ int main(int argc, char * argv[]) {
     my_addr.sin_port = htons(portNumber); /* short, network byte order */
     my_addr.sin_addr.s_addr = INADDR_ANY; /* auto-fill with my IP */
 
+=======
+
+int PlayHangman(char *object[], int obj_size, char *obj_type[], int type_size, userNode *user, int new_fd)
+{
+    int size1 = obj_size;
+    int size2 = type_size;
+    char name[10], word1[size1], word2[size2];
+    if (user == NULL){
+        printf("ERROR");
+    }
+    userNode* acc = user;
+    strcpy(name, acc->username);
+    printf("user: %s", name);
+    strcpy(word1, object);
+    strcpy(word2, obj_type);
+    printf("words: %s %s", word1, word2);
+
+    int obj[size1];// boolean array testing whether a letter was guessed
+    int type[size2];
+    memset(obj, 0, size1*sizeof(int));
+    memset(type, 0, size2*sizeof(int));
+    //int type[word2_len] = {0};
+
+    char letters[20] = { NULL };
+    //memset(letters, 0, 20*sizeof(char));
+
+    char progress[50] = { NULL };
+
+    char str_spc[2], str_word[2];
+    str_spc[1] = '\0';
+    str_word[1] = '\0';
+    char spc = ' ';
+    str_spc[0] = spc;
+
+    char c;
+    char *raw;
+    char undr[] = "_ ";
+    char space[] = "  ";
+    int endgame = 0;
+    //int num_guesses = 20;
+    int num_guesses = MIN((size1 + size2 + 10),26);
+    while (!endgame){
+        SendInt(new_fd, num_guesses);
+        memset(progress, 0, sizeof progress);
+        for (int i=0;i<size1;i++){
+            if (!obj[i]){
+                //printf("_ ");
+                strcat(progress, undr);
+            } else {
+                //printf("%c ", word1[i]);
+                str_word[0] = word1[i];
+                strcat(progress, str_word);
+                strcat(progress, str_spc);
+            }
+        }
+        //printf("  ");
+        strcat(progress, space);
+        for (int i=0;i<size2;i++){
+            if (!type[i]){
+                //printf("_ ");
+                strcat(progress, undr);
+            } else {
+                //printf("%c ", word2[i]);
+                str_word[0] = word2[i];
+                strcat(progress, str_word);
+                strcat(progress, str_spc);
+            }
+        }
+        ReceiveInt(new_fd);
+        send(new_fd, progress, 60, 0);
+        //c[0] = getchar();
+        endgame = 1;
+        for (int i=0;i<size1;i++){
+            if (!obj[i]){ // checking all true for boolean arrays
+                endgame = 0;
+            }
+        }
+        for (int i=0;i<size2;i++){
+            if (!type[i]){
+                endgame = 0;
+            }
+        }
+        if (!num_guesses){
+            endgame = 1;
+        }
+        ReceiveInt(new_fd);
+        SendInt(new_fd, endgame);
+        if (num_guesses > 0 && !endgame){
+            //scanf(" %c", &c[0]);
+            //c = ReceiveData(new_fd, STRING_LENGTH);
+            raw = ReceiveData(new_fd, STRING_LENGTH);
+            c = raw[0];
+        }
+        //ClearScreen();
+        num_guesses -= 1;
+        for (int i=0;i<size1;i++){
+            if (c == word1[i]){
+                // setting boolean array depending if letter was guessed
+                obj[i] = 1;
+            }
+        }
+        for (int i=0;i<size2;i++){
+            if (c == word2[i]){
+                // setting boolean array depending if letter was guessed
+                type[i] = 1;
+            }
+        }
+
+    }
+    if(num_guesses > 0){
+        printf("Well done %s You won this round of Hangman!\n", name);
+        return 1;
+    } else {
+        printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", name);
+        return 0;
+    }
+}
+
+int main(int argc, char * argv[]) {
+    userNode * users = NULL;
+    wordPair * words = NULL;
+    callbackUser dispUsers = displayUsers;
+    callbackWord dispWords = displayWords;
+
+    int portNumber;
+    int sockfd, new_fd; /* listen on sock_fd, new connection on new_fd */
+    struct sockaddr_in my_addr; /* my address information */
+    struct sockaddr_in their_addr; /* connector's address information */
+    socklen_t sin_size;
+
+    //If no port number argument is recieved, show message, use default port
+    if (argc != ARGUMENTS_EXPECTED) {
+        fprintf(stderr, "Defaulting to port 54321.\n");
+        portNumber = DEFAULT_PORT_NO;
+    }
+
+    /* generate the socket */
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == RETURNED_ERROR) {
+        perror("socket");
+        exit(1);
+    }
+
+    /* generate the end point */
+    my_addr.sin_family = AF_INET; /* host byte order */
+    my_addr.sin_port = htons(portNumber); /* short, network byte order */
+    my_addr.sin_addr.s_addr = INADDR_ANY; /* auto-fill with my IP */
+
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
     /* bind the socket to the end point */
     if (bind(sockfd, (struct sockaddr * ) & my_addr, sizeof(struct sockaddr)) == RETURNED_ERROR) {
         perror("bind");
@@ -718,15 +944,23 @@ int main(int argc, char * argv[]) {
             raw = ReceiveData(new_fd, STRING_LENGTH);
             choice = raw[0];
             //printf("The client chose: %c\n", &choice);
+<<<<<<< HEAD
             switch (choice)
             {
             case '1':
             //if (choice == choices[0]){
+=======
+            switch (choice)
+            {
+            case '1':
+            //if (choice == choices[0]){
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
                 printf("option was 1");// testing to see if this option was chosen
                 //userNode *mao = searchUser(users, "Maolin");
                 time_t t;
                 srand((unsigned) time(&t));
                 wordPair * word = searchWord(words, rand() % wordCount(words));
+<<<<<<< HEAD
                 //const char *words[] = {"snek", "snake"};
                 const int sizes[] = {strlen(word->firstWord), strlen(word->secondWord)};
                 wins = PlayHangman(word->firstWord, sizes[0], word->secondWord, sizes[1], user, new_fd);
@@ -746,6 +980,27 @@ int main(int argc, char * argv[]) {
             //}else{
             default:
                 printf("Invalid option");
+=======
+                //const char *words[] = {"snek", "snake"};
+                const int sizes[] = {strlen(word->firstWord), strlen(word->secondWord)};
+                wins = PlayHangman(word->firstWord, sizes[0], word->secondWord, sizes[1], user, new_fd);
+                user->gamesPlayed++;
+                user->gamesWon += wins;
+                break;
+            //}else if (choice == choices[1]){
+            case '2':
+                printf("option was 2");
+                sendLeaderboard(users, new_fd);
+                break;
+            //}else if (choice == choices[2]){
+            case '3':
+                printf("option was 3");
+                end = 1;
+                break;
+            //}else{
+            default:
+                printf("Invalid option");
+>>>>>>> 3777ab9ade21e1719ebf2fb5457f44fe4ff1cb99
             }
         }
     }
