@@ -51,7 +51,9 @@ void ReceiveData(int sockfd) {
 int ReceiveInt(int sockfd) {
     int integer;
     unsigned short netval;
-    recv(sockfd, & netval, sizeof(unsigned short), 0);
+    if (recv(sockfd, & netval, sizeof(unsigned short), 0) == RETURNED_ERROR){
+        return -1;
+    }
     integer = ntohs(netval);
     return integer;
 }
@@ -185,6 +187,11 @@ int main(int argc, char * argv[]) {
             perror("connect");
             exit(1);
         }
+        // check if server is full or down
+        if (ReceiveInt(sockfd)){
+            fprintf(stderr, "Unable to connect. Server full or offline\n");
+            exit(1);
+        }
         DisplayWelcomeMessage();
         char c[2];
         //while(1){
@@ -209,7 +216,7 @@ int main(int argc, char * argv[]) {
             //ReceiveData(sockfd);
             useracc = ReceiveInt(sockfd);
             if (!useracc) {
-                printf("User doesn't exist\n");
+                printf("User doesn't exist or is already online\n");
             }
         }
 
