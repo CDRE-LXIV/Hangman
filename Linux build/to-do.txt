@@ -1,0 +1,6 @@
+//to do list
+1.) fix guessed letter sending
+2.) improve new thread creation (assigning new_fds to threadArg structs)
+3.) prevent duplicate user
+4.) change thread process to create and destroy threads
+5.) MUTEX!
