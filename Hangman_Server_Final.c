@@ -457,31 +457,19 @@ void sendUser(userNode * n, int new_fd) {
         ReceiveInt(new_fd);
     }
 }
-/*
+
+
 //sends leaderboard data for each user
 void sendLeaderboard(userNode * head, int new_fd) {
     userNode * users = head;
-    Sort(users);
-    while (users != NULL) {
-        sendUser(users, new_fd);
-        users = users-> next;
-    }
-    SendInt(new_fd, 1); // flag for completed send
-}
-*/
-///sends leaderboard data for each user
-void sendLeaderboard(userNode * head, int new_fd) {
-    userNode * users = head;
 
-    // Part 2 - the head element
+
     userNode *newHead = malloc(sizeof(userNode));
     strcpy(newHead->username, users->username);
     strcpy(newHead->password, users->password);
     newHead-> gamesPlayed = users-> gamesPlayed;
     newHead-> gamesWon = users-> gamesWon;
     newHead-> online = users-> online;
-
-    // Part 3 - the rest of the list
     userNode *p = newHead;
     users = users->next;
     while(users != NULL) {
@@ -494,14 +482,14 @@ void sendLeaderboard(userNode * head, int new_fd) {
         p-> online = users-> online;
         users = users->next;
     }
-    p->next = NULL;  // terminate last element.
+    p->next = NULL;  
 
     Sort(newHead);
     while (newHead != NULL) {
         sendUser(newHead, new_fd);
         newHead = newHead-> next;
     }
-    SendInt(new_fd, 1); // flag for completed send
+    SendInt(new_fd, 1); 
 }
 
 // displays word pairs in list
