@@ -69,6 +69,7 @@ sem_t readAccess;
 sem_t dbAccess;
 int readCount = 0;
 
+//callback definitions for linked list
 typedef void( * callbackUser)(userNode * data);
 typedef void( * callbackWord)(wordPair * data);
 
@@ -87,7 +88,7 @@ void SignalHandler(void) {
     exit(0);
 }
 
-//resets argument structure values after clients quit
+//resets argument structure values after clients' quit
 void CleanArgs(ThreadArgs * args) {
     args-> idleThread = 1;
     args-> new_fd = 0;
@@ -228,10 +229,9 @@ int Compare(const userNode * a,
     }
     if (a-> gamesWon == b-> gamesWon) {
         if (((double) a-> gamesWon) / a-> gamesPlayed == ((double) b-> gamesWon) / b-> gamesPlayed) { // determines percentage of games won
-            if (strcmp(a->username, b->username) > 0){
+            if (strcmp(a->username, b->username) > 0){ // determine lexicographic order
                 return 1;
             } else {return 0;}
-            //return a-> username < b-> username;
         } else {
             return ((double) a-> gamesWon) / a-> gamesPlayed < ((double) b-> gamesWon) / b-> gamesPlayed;
         }
@@ -251,7 +251,7 @@ userNode * Sort(userNode * head) {
     while (temp != NULL) {
         temp1 = temp-> next;
         while (temp1 != NULL) {
-            if (Compare(temp, temp1)) {
+            if (Compare(temp, temp1)) { // shuffling linked list depending on compare value
                 strcpy(usrn, temp-> username);
                 strcpy(pass, temp-> password);
                 played = temp-> gamesPlayed;
@@ -442,7 +442,7 @@ void displayUsers(userNode * n) {
 
 //sends userdata for leaderboard displaying only users with at least 1 game played
 void sendUser(userNode * n, int new_fd) {
-    if (n != NULL && n-> gamesPlayed > 0) {
+    if (n != NULL && n-> gamesPlayed > 0) { // checks if user has played at least 1 game
         char name[usernameMaxLength];
         strcpy(name, n-> username);
         int played = n-> gamesPlayed;
@@ -451,9 +451,9 @@ void sendUser(userNode * n, int new_fd) {
         ReceiveInt(new_fd);
         send(new_fd, name, 10, 0); // sends user name
         ReceiveInt(new_fd);
-        SendInt(new_fd, won);
+        SendInt(new_fd, won); // sends games won
         ReceiveInt(new_fd);
-        SendInt(new_fd, played);
+        SendInt(new_fd, played); // sends games played
         ReceiveInt(new_fd);
     }
 }
@@ -463,7 +463,8 @@ void sendUser(userNode * n, int new_fd) {
 void sendLeaderboard(userNode * head, int new_fd) {
     userNode * users = head;
 
-
+    /*recursively copies entire users linked list before sorting
+    to prevent breaking read process elsewhere*/
     userNode *newHead = malloc(sizeof(userNode));
     strcpy(newHead->username, users->username);
     strcpy(newHead->password, users->password);
@@ -482,14 +483,15 @@ void sendLeaderboard(userNode * head, int new_fd) {
         p-> online = users-> online;
         users = users->next;
     }
-    p->next = NULL;  
+    p->next = NULL;
+    //now linked list copy is sorted and sent instead
 
     Sort(newHead);
     while (newHead != NULL) {
         sendUser(newHead, new_fd);
         newHead = newHead-> next;
     }
-    SendInt(new_fd, 1); 
+    SendInt(new_fd, 1);
 }
 
 // displays word pairs in list
@@ -522,9 +524,7 @@ char * ReceiveData(int socket_identifier, int size) {
     char * receivedData = malloc(sizeof(char) * size);
     for (int i = 0; i < size; i++) {
         if ((numberOfBytes = recv(socket_identifier, & networkValue, sizeof(unsigned short), 0)) <= 0) {
-            //perror("recv");
-            //exit(EXIT_FAILURE);
-            return -1;
+            return -1; // return signal that client has disconnected
         }
         receivedData[i] = ntohs(networkValue);
     }
@@ -542,7 +542,7 @@ int ReceiveInt(int socket_id) {
     int integer;
     unsigned short netval;
     if (recv(socket_id, & netval, sizeof(unsigned short), 0) <= 0) {
-        return -1;
+        return -1; // return signal that client has disconnected
     }
     integer = ntohs(netval);
     return integer;
@@ -561,37 +561,14 @@ int TestCharacter(char receivedChar) {
 Once a client connection is accepted, they are passed to this function. Arguments
 are in the form of a pointer to a structure of type ThreadArgs.*/
 void * GameLoop(ThreadArgs * argStruct) {
-        //void* GameLoop(int idx){//void* argStruct) {
-
-        // ThreadArgs *args = (ThreadArgs*) argStruct;
-        // ThreadArgs arguments = *args;
-
-        //ThreadArgs *args;
-        //args = (ThreadArgs *) argStruct;
-
-        //ThreadArgs args = *(ThreadArgs*) argStruct;
-
-        //userNode *users = args->users;  //pointer to head of user linked lsit
-        //wordPair *words = args->words;  //pointer to head of words linked list
         int new_fd = argStruct-> new_fd;
-        int threadIdle = argStruct-> idleThread;
-        printf("New_fd: %d\n", new_fd);
-        char * testString = "Testing new thread:";
         SendInt(new_fd, 0);
 
-        callbackUser dispUsers = displayUsers;
-        callbackWord dispWords = displayWords;
-        // traverseUsers(users, dispUsers);
-        // traverseWords(words, dispWords);
-
         //set thread as being in-use
-        threadIdle = 0;
         argStruct-> idleThread = 0;
-        printf("idle?: %d\n", argStruct-> idleThread);
-        int quitFlag = 0;
 
         //wait for string to be received
-        int useracc = 0;
+        int useracc = 0; // flag for username and password correctness
         int passacc = 0;
         userNode * user = NULL;
         while (!useracc) { // keep looping until valid user is entered
@@ -646,7 +623,7 @@ void * GameLoop(ThreadArgs * argStruct) {
             choice = raw[0];
             switch (choice) {
             case '1':
-                printf("option was 1"); // testing to see if this option was chosen
+            {
                 time_t t;
                 srand((unsigned) time( & t));
                 wordPair * word = searchWord(words, rand() % wordCount(words));
@@ -654,24 +631,22 @@ void * GameLoop(ThreadArgs * argStruct) {
                     strlen(word-> firstWord),
                     strlen(word-> secondWord)
                 };
-                printf("First word: %s, Second word: %s", word-> firstWord, word-> secondWord);
                 wins = PlayHangman(word-> firstWord, sizes[0], word-> secondWord, \
                     sizes[1], user, new_fd);
 
                 //writing into leaderboard
-                sem_wait( & dbAccess);
+                sem_wait( & dbAccess); // signal other threads to wait
                 user-> gamesPlayed++;
                 user-> gamesWon += wins;
-                sem_post( & dbAccess);
+                sem_post( & dbAccess); // signal other threads database is free
                 //end writing
 
                 break;
+            }
             case '2':
-                printf("option was 2");
-
                 // reading into leaderboard semaphore
-                sem_wait( & readAccess);
-                readCount++;
+                sem_wait( & readAccess); // signal this thread is reading
+                readCount++; // increment number of readers
                 if (readCount == 1) {
                     sem_wait( & dbAccess);
                     //reading code
@@ -680,25 +655,21 @@ void * GameLoop(ThreadArgs * argStruct) {
                 }
                 sem_post( & readAccess);
                 sem_wait( & readAccess);
-                readCount = readCount - 1;
+                readCount = readCount - 1; // done reading, decrement number of readers
                 if (readCount == 0) {
                     sem_post( & dbAccess);
                 }
-                sem_post( & readAccess);
+                sem_post( & readAccess); // signal this thread is done reading
                 //end reading
 
                 break;
             case '3':
-                printf("option was 3");
-                threadIdle = 1;
                 end = 1;
                 //exit gracefully
                 CleanArgs(argStruct);
                 user-> online = 0;
                 pthread_exit(NULL);
                 break;
-            default:
-                printf("Invalid option");
             }
         } //end game while(!end) loop
     } //end GameLoop
@@ -717,18 +688,16 @@ int PlayHangman(char * object[], int obj_size, char * obj_type[], int type_size,
     userNode * acc = user;
     strcpy(name, acc-> username);
 
-    printf("user: %s", name); // testing
     strcpy(word1, object);
     strcpy(word2, obj_type);
-    printf("words: %s %s", word1, word2); // testing
     int obj[size1]; // boolean arrays testing whether a letter was guessed
     int type[size2];
     memset(obj, 0, size1 * sizeof(int)); // initialising bool array to all false
     memset(type, 0, size2 * sizeof(int));
 
-    char progress[50] = {
+    char progress[50] = { // concatenated string of underscores and guessed letters
         NULL
-    }; // concatenated string of underscores and guessed letters
+    };
 
     //for terminating chars with null terminators
     char str_spc[2], str_letter[2];
@@ -737,8 +706,8 @@ int PlayHangman(char * object[], int obj_size, char * obj_type[], int type_size,
     char spc = ' ';
     str_spc[0] = spc;
 
-    char c;
-    char * raw; // raw received letter
+    char c; // singled received letter
+    char * raw; // raw received letters
     char undr[] = "_ "; // underscore
     char space[] = "  "; // space between underscored words
     int endgame = 0;
@@ -746,6 +715,7 @@ int PlayHangman(char * object[], int obj_size, char * obj_type[], int type_size,
     while (!endgame) {
         SendInt(new_fd, num_guesses); // sends number of guesses
         memset(progress, 0, sizeof progress); // clears progress initially
+
         // concatenates underscores and letters depending on which was guessed correctly
         for (int i = 0; i < size1; i++) {
             if (!obj[i]) {
@@ -804,37 +774,27 @@ int PlayHangman(char * object[], int obj_size, char * obj_type[], int type_size,
             }
         }
     }
-    // shouldn't be here but for testing purposes
     if (num_guesses > 0) {
-        printf("Well done %s You won this round of Hangman!\n", name);
         return 1;
     } else {
-        printf("Bad luck %s You have run out of guesses. The Hangman got you!\n", name);
         return 0;
     }
 }
 
 int main(int argc, char * argv[]) {
-        //userNode * users = NULL;
-        //wordPair * words = NULL;
 
         //Initialise semaphore
         sem_init(&readAccess,0,1);
         sem_init(&dbAccess,0,1);
-
-        callbackUser dispUsers = displayUsers;
-        callbackWord dispWords = displayWords;
 
         int portNumber;
         int sockfd, new_fd; /* listen on sock_fd, new connection on new_fd */
         struct sockaddr_in my_addr; /* my address information */
         struct sockaddr_in their_addr; /* connector's address information */
         socklen_t sin_size;
-        //thread IDs
-        pthread_t tids[BACKLOG];
+
         int userCounter = 0;
         int threadUser = 0;
-        //ThreadArgs * args = (ThreadArgs * )malloc(sizeof ThreadArgs);
 
         //If no port number argument is recieved, show message, use default port
         if (argc != ARGUMENTS_EXPECTED) {
@@ -873,11 +833,7 @@ int main(int argc, char * argv[]) {
 
         //import word list and authentication details
         words = WordListImport();
-        //traverseWords(words, dispWords);
-        printf("Words imported!\n");
         users = AuthenticationImport();
-        //traverseUsers(users, dispUsers);
-        printf("Authentication details imported!\n");
 
         GenerateThreadArgs(users, words);
 
@@ -910,7 +866,7 @@ int main(int argc, char * argv[]) {
                 }
                 userCounter++;
             }
-            if (!threadUser) {
+            if (!threadUser) { // else reply stating server is full
                 printf("Thread pool full\n");
                 SendInt(new_fd, 1);
             }

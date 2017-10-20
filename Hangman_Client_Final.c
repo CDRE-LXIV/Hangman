@@ -180,7 +180,6 @@ int main(int argc, char * argv[]) {
         their_addr.sin_family = AF_INET; /* host byte order */
         their_addr.sin_port = htons(portNumber); /* short, network byte order */
         their_addr.sin_addr = * ((struct in_addr * ) he-> h_addr);
-        // bzero(&(their_addr.sin_zero), 8);     /* zero the rest of the struct */
 
         if (connect(sockfd, (struct sockaddr * ) & their_addr, \
                 sizeof(struct sockaddr)) == RETURNED_ERROR) {
@@ -194,11 +193,9 @@ int main(int argc, char * argv[]) {
         }
         DisplayWelcomeMessage();
         char c[2];
-        //while(1){
-        //client should be connected, receive message
 
         //process for checking username and password authenticity
-        int useracc = 0;
+        int useracc = 0; // flag for username and password correctness
         int passacc = 0;
         char username[10] = {
             NULL
@@ -245,19 +242,14 @@ int main(int argc, char * argv[]) {
             SendString(sockfd, c, 2);
             switch (c[0]) {
             case '1':
-                printf("option was 1"); // testing to see if this option was chosen
                 PlayHangman(username, sockfd);
                 break;
             case '2':
-                printf("option was 2");
                 Leaderboard(sockfd);
                 break;
             case '3':
-                printf("option was 3");
                 exit(EXIT_SUCCESS);
                 break;
-            default:
-                printf("Invalid option");
             }
             ClearScreen();
         } //end while loop
