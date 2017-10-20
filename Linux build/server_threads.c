@@ -642,7 +642,7 @@ void * GameLoop(ThreadArgs * argStruct) {
                 }
                 sem_post( & readAccess);
                 sem_wait( & readAccess);
-                readCount--;
+                readCount = readCount - 1;
                 if (readCount == 0) {
                     sem_post( & dbAccess);
                 }
@@ -779,6 +779,11 @@ int PlayHangman(char * object[], int obj_size, char * obj_type[], int type_size,
 int main(int argc, char * argv[]) {
         //userNode * users = NULL;
         //wordPair * words = NULL;
+
+        //Initialise semaphore
+        sem_init(&readAccess,0,1);
+        sem_init(&dbAccess,0,1);
+
         callbackUser dispUsers = displayUsers;
         callbackWord dispWords = displayWords;
 
@@ -873,6 +878,10 @@ int main(int argc, char * argv[]) {
             }
 
         } //end accept while loop
+        //destroy semaphores
+        sem_destroy(&dbAccess);
+        sem_destroy(&readAccess);
+
         pthread_exit(NULL);
         return 0;
     } //end main
